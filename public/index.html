@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca · Hotel Guadiana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --washi:#FAF8F3; --washi-2:#F2EEE4; --sumi:#211F1B; --sumi-soft:#54504A;
+    --ai:#2C3A5E; --ai-soft:#4A5A82; --shu:#B23A32; --line:#E3DDD0;
+    --kin:#B99244; --ok:#4C7A5A; --prov:#7A5A82;
+    --shadow:0 1px 2px rgba(33,31,27,.04), 0 8px 24px rgba(33,31,27,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:"Zen Kaku Gothic New",system-ui,sans-serif;background:var(--washi);color:var(--sumi);line-height:1.5;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background:radial-gradient(circle at 20% 30%, rgba(185,146,68,.03), transparent 40%),radial-gradient(circle at 80% 70%, rgba(44,58,94,.03), transparent 40%)}
+  .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 24px}
+  .hidden{display:none !important}
+
+  .auth{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--washi)}
+  .auth-card{width:100%;max-width:380px;text-align:center;animation:pop .3s both}
+  .auth .hanko{width:70px;height:70px;margin:0 auto 22px;border-radius:14px;border:2.5px solid var(--shu);color:var(--shu);
+    display:grid;place-items:center;font-family:"Shippori Mincho",serif;font-weight:700;font-size:30px;
+    background:linear-gradient(160deg,#fff,var(--washi));box-shadow:inset 0 0 0 3px rgba(178,58,50,.08);transform:rotate(-3deg)}
+  .auth h1{font-family:"Shippori Mincho",serif;font-weight:600;font-size:27px;margin-bottom:6px}
+  .auth .sub{font-size:12.5px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--sumi-soft);margin-bottom:30px}
+  .auth input{width:100%;padding:13px 15px;border:1px solid var(--line);background:#fff;border-radius:11px;font:inherit;font-size:15px;color:var(--sumi);margin-bottom:12px;transition:border-color .16s, box-shadow .16s}
+  .auth input:focus{outline:none;border-color:var(--ai);box-shadow:0 0 0 3px rgba(44,58,94,.1)}
+  .auth button{width:100%;padding:14px;border:none;border-radius:11px;cursor:pointer;background:var(--ai);color:#fff;font:inherit;font-weight:700;font-size:15px;transition:background .18s;margin-top:4px}
+  .auth button:hover{background:#232f4d}
+  .auth button:disabled{opacity:.6;cursor:not-allowed}
+  .auth .err{color:var(--shu);font-size:13.5px;margin-top:14px;min-height:18px;font-weight:500}
+
+  header.top{padding:34px 0 22px;border-bottom:1px solid var(--line)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;gap:16px}
+  .hanko-sm{width:54px;height:54px;flex:0 0 auto;border-radius:12px;border:2.5px solid var(--shu);color:var(--shu);
+    display:grid;place-items:center;font-family:"Shippori Mincho",serif;font-weight:700;font-size:23px;
+    background:linear-gradient(160deg,#fff,var(--washi));box-shadow:inset 0 0 0 3px rgba(178,58,50,.08);transform:rotate(-3deg)}
+  .brand h1{font-family:"Shippori Mincho",serif;font-weight:600;font-size:27px;letter-spacing:.5px;line-height:1.1}
+  .brand .sub{display:block;font-size:12px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--sumi-soft);margin-top:5px}
+  .brand .sub em{color:var(--ai);font-style:normal}
+  .logout{padding:9px 15px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600;color:var(--sumi-soft);white-space:nowrap;transition:.15s}
+  .logout:hover{background:var(--washi-2);color:var(--sumi)}
+
+  .toolbar{display:flex;gap:12px;align-items:center;margin:24px 0 18px;flex-wrap:wrap}
+  .search{position:relative;flex:1 1 300px;min-width:200px}
+  .search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--sumi-soft)}
+  .search input{width:100%;padding:13px 16px 13px 44px;border:1px solid var(--line);background:#fff;border-radius:11px;font:inherit;font-size:15px;color:var(--sumi);transition:border-color .18s, box-shadow .18s}
+  .search input::placeholder{color:#a49e93}
+  .search input:focus{outline:none;border-color:var(--ai);box-shadow:0 0 0 3px rgba(44,58,94,.1)}
+  .btn-add{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;padding:13px 20px;border:none;border-radius:11px;cursor:pointer;background:var(--ai);color:#fff;font:inherit;font-weight:700;font-size:14.5px;transition:background .18s, transform .12s}
+  .btn-add:hover{background:#232f4d}
+  .btn-add:active{transform:translateY(1px)}
+  .btn-add svg{width:17px;height:17px}
+  .btn-print{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:13px 17px;border:1px solid var(--line);border-radius:11px;cursor:pointer;background:#fff;color:var(--sumi-soft);font:inherit;font-weight:600;font-size:14px;transition:.16s}
+  .btn-print:hover{background:var(--washi-2);color:var(--sumi);border-color:#d6cfbf}
+  .btn-print svg{width:17px;height:17px}
+
+  .filters{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+  .chip{padding:7px 15px;border:1px solid var(--line);background:#fff;border-radius:100px;font:inherit;font-size:13.5px;font-weight:500;color:var(--sumi-soft);cursor:pointer;transition:all .16s}
+  .chip:hover{border-color:var(--ai-soft);color:var(--ai)}
+  .chip.active{background:var(--sumi);border-color:var(--sumi);color:var(--washi);font-weight:700}
+  .count{margin:16px 2px 22px;font-size:13px;color:var(--sumi-soft);letter-spacing:.3px}
+  .count b{color:var(--sumi);font-weight:700}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;padding-bottom:80px}
+  .doc{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;cursor:pointer;overflow:hidden;transition:transform .16s, box-shadow .16s, border-color .16s;animation:rise .4s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .doc:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#d6cfbf}
+  .doc:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+  .doc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cat,var(--ai))}
+  .doc .kind{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--cat,var(--ai));margin-bottom:12px}
+  .doc h3{font-family:"Shippori Mincho",serif;font-weight:600;font-size:19px;line-height:1.3;margin-bottom:8px;color:var(--sumi)}
+  .doc p{font-size:13.5px;color:var(--sumi-soft);line-height:1.55;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .doc .contact-line{font-size:13px;color:var(--sumi-soft);margin-bottom:14px;display:flex;flex-direction:column;gap:3px}
+  .doc .contact-line span{display:flex;align-items:center;gap:7px}
+  .doc .contact-line svg{width:13px;height:13px;color:var(--prov);flex:0 0 auto}
+  .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:11.5px;color:var(--sumi-soft);background:var(--washi-2);padding:3px 9px;border-radius:6px}
+  .doc .open-hint{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);font-size:12.5px;font-weight:600;color:var(--ai);display:flex;align-items:center;gap:6px}
+  .doc .open-hint svg{width:14px;height:14px}
+
+  .empty{grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--sumi-soft)}
+  .empty .mark{font-family:"Shippori Mincho",serif;font-size:44px;color:var(--line);margin-bottom:14px}
+  .empty h3{font-family:"Shippori Mincho",serif;font-weight:600;font-size:20px;color:var(--sumi);margin-bottom:8px}
+  .empty p{font-size:14px;max-width:340px;margin:0 auto 20px}
+  .loading{grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--sumi-soft);font-size:14px}
+
+  .overlay{position:fixed;inset:0;z-index:50;background:rgba(33,31,27,.42);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+  .overlay.show{display:flex;animation:fade .2s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal{background:var(--washi);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(33,31,27,.25);animation:pop .24s both}
+  @keyframes pop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+  .modal.viewer{max-width:920px}
+  .mhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--washi);z-index:2}
+  .mhead h2{font-family:"Shippori Mincho",serif;font-weight:600;font-size:20px}
+  .mhead .close{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--sumi-soft);flex:0 0 auto;transition:.15s}
+  .mhead .close:hover{background:var(--washi-2);color:var(--sumi)}
+  .mbody{padding:24px 26px}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--sumi);margin-bottom:7px;letter-spacing:.2px}
+  .field label span{font-weight:400;color:var(--sumi-soft)}
+  .field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1px solid var(--line);background:#fff;border-radius:9px;font:inherit;font-size:14.5px;color:var(--sumi);transition:border-color .16s, box-shadow .16s}
+  .field textarea{resize:vertical;min-height:74px}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--ai);box-shadow:0 0 0 3px rgba(44,58,94,.1)}
+  .field .hint{font-size:12px;color:var(--sumi-soft);margin-top:6px;line-height:1.5}
+  .field .hint b{color:var(--sumi)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .days{display:flex;gap:7px;flex-wrap:wrap}
+  .day{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font:inherit;font-weight:700;font-size:13.5px;color:var(--sumi-soft);transition:.15s}
+  .day:hover{border-color:var(--prov)}
+  .day.on{background:var(--prov);border-color:var(--prov);color:#fff}
+  .mfoot{display:flex;gap:10px;justify-content:flex-end;padding:18px 26px 24px}
+  .btn-ghost{padding:11px 18px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--sumi-soft)}
+  .btn-ghost:hover{background:var(--washi-2)}
+  .btn-save{padding:11px 22px;border:none;background:var(--ai);color:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;font-size:14px}
+  .btn-save:hover{background:#232f4d}
+  .btn-save:disabled{opacity:.5;cursor:not-allowed}
+  .btn-del{padding:11px 18px;border:1px solid #e4c9c6;background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--shu);margin-right:auto}
+  .btn-del:hover{background:#fbf0ef}
+  .btn-vprint{padding:11px 16px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--sumi-soft);display:inline-flex;align-items:center;gap:7px}
+  .btn-vprint:hover{background:var(--washi-2);color:var(--sumi)}
+  .btn-vprint svg{width:15px;height:15px}
+
+  .viewer-frame{width:100%;height:66vh;border:none;background:#fff}
+  .viewer-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 26px;border-top:1px solid var(--line);font-size:13px;color:var(--sumi-soft)}
+  .viewer-meta .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .viewer-meta a{color:var(--ai);font-weight:600;text-decoration:none}
+  .viewer-meta a:hover{text-decoration:underline}
+  .viewer-fallback{padding:50px 26px;text-align:center;color:var(--sumi-soft)}
+  .viewer-fallback b{color:var(--sumi)}
+
+  .pfiche{padding:26px}
+  .prow{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .prow:last-of-type{border-bottom:none}
+  .prow .ico{width:38px;height:38px;flex:0 0 auto;border-radius:10px;background:var(--washi-2);display:grid;place-items:center;color:var(--prov)}
+  .prow .ico svg{width:18px;height:18px}
+  .prow .lbl{font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sumi-soft);margin-bottom:3px}
+  .prow .val{font-size:16px;color:var(--sumi);font-weight:500}
+  .prow .val a{color:var(--ai);text-decoration:none;font-weight:700}
+  .prow .val a:hover{text-decoration:underline}
+  .prow .val.muted{color:var(--sumi-soft);font-weight:400;font-size:14.5px}
+  .pdays{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .pday{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-size:12.5px;font-weight:700;background:var(--washi-2);color:#c3bcae}
+  .pday.on{background:var(--prov);color:#fff}
+  .pnotes{padding:16px 26px;border-top:1px solid var(--line);font-size:14px;color:var(--sumi-soft);line-height:1.6}
+
+  footer{border-top:1px solid var(--line);padding:22px 0 40px;text-align:center;color:var(--sumi-soft);font-size:12.5px;letter-spacing:.3px}
+
+  /* ==================== ÁREA DE IMPRESIÓN ==================== */
+  #printArea{display:none}
+  @media print{
+    body::before{display:none}
+    .wrap, .auth, .overlay{display:none !important}
+    #printArea{display:block !important;color:#000;font-family:"Zen Kaku Gothic New",system-ui,sans-serif;padding:0}
+    .p-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #000;padding-bottom:14px;margin-bottom:8px}
+    .p-hanko{width:44px;height:44px;border:2px solid #000;border-radius:8px;display:grid;place-items:center;font-family:"Shippori Mincho",serif;font-weight:700;font-size:20px}
+    .p-title{font-family:"Shippori Mincho",serif;font-size:22px;font-weight:600}
+    .p-meta{font-size:11px;color:#333;margin-top:2px}
+    .p-section{margin-top:18px;break-inside:avoid}
+    .p-cat{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid #999;padding-bottom:4px;margin-bottom:8px}
+    .p-item{padding:8px 0;border-bottom:1px dotted #bbb;break-inside:avoid}
+    .p-item .n{font-weight:700;font-size:14px}
+    .p-item .d{font-size:12px;color:#333;margin-top:2px;line-height:1.5}
+    .p-item .d b{color:#000}
+    .p-foot{margin-top:24px;padding-top:10px;border-top:1px solid #999;font-size:10px;color:#666;text-align:center}
+    @page{margin:1.6cm}
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== ACCESO ==================== -->
+<div class="auth" id="authScreen">
+  <div class="auth-card">
+    <div class="hanko">蔵</div>
+    <h1>Biblioteca</h1>
+    <div class="sub">Hotel Guadiana</div>
+    <input id="email" type="email" placeholder="Correo electrónico" autocomplete="username">
+    <input id="password" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button id="loginBtn">Entrar</button>
+    <div class="err" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div class="wrap hidden" id="app">
+  <header class="top">
+    <div class="topbar">
+      <div class="brand">
+        <div class="hanko-sm" aria-hidden="true">蔵</div>
+        <div><h1>Biblioteca</h1><span class="sub">Hotel Guadiana · <em>Cocina</em></span></div>
+      </div>
+      <button class="logout" id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="search" placeholder="Buscar por nombre, etiqueta o descripción…" autocomplete="off">
+    </div>
+    <button class="btn-print" id="printBtn" title="Imprimir el listado que ves">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+      Imprimir
+    </button>
+    <button class="btn-add" id="openAdd">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+      Añadir
+    </button>
+  </div>
+
+  <div class="filters" id="filters"></div>
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer>Biblioteca privada · Hotel Guadiana</footer>
+</div>
+
+<!-- Área que se imprime -->
+<div id="printArea"></div>
+
+<!-- Modal: añadir -->
+<div class="overlay" id="addOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+    <div class="mhead">
+      <h2 id="addTitle">Añadir</h2>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div class="field"><label for="f-cat">Categoría</label><select id="f-cat"></select></div>
+      <div class="field"><label id="f-title-label" for="f-title">Título</label><input id="f-title" type="text" placeholder="Ej. Plan APPCC 2026"></div>
+
+      <div id="provFields" class="hidden">
+        <div class="row2">
+          <div class="field"><label for="f-contact">Persona de contacto</label><input id="f-contact" type="text" placeholder="Ej. María López"></div>
+          <div class="field"><label for="f-phone">Teléfono</label><input id="f-phone" type="tel" placeholder="Ej. 926 000 000"></div>
+        </div>
+        <div class="field"><label>Días de reparto</label><div class="days" id="daysPicker"></div></div>
+      </div>
+
+      <div class="field"><label for="f-tags">Etiquetas <span>(por comas)</span></label><input id="f-tags" type="text" placeholder="pescado, temporada"></div>
+      <div class="field"><label id="f-desc-label" for="f-desc">Descripción <span>(opcional)</span></label><textarea id="f-desc" placeholder="Una línea para reconocerlo"></textarea></div>
+      <div class="field">
+        <label id="f-link-label" for="f-link">Enlace de Google Drive</label>
+        <input id="f-link" type="url" placeholder="https://drive.google.com/file/d/…/view">
+        <div class="hint" id="f-link-hint">Sube el PDF a Drive, pulsa <b>Compartir → Cualquiera con el enlace</b> y pega aquí el enlace.</div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-ghost" data-close>Cancelar</button>
+      <button class="btn-save" id="saveDoc">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: visor -->
+<div class="overlay" id="viewOverlay">
+  <div class="modal viewer" role="dialog" aria-modal="true" aria-labelledby="viewTitle">
+    <div class="mhead">
+      <h2 id="viewTitle">Documento</h2>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div id="viewerContent"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDLe7TRJQFFxfTAvHwhqwrhcgK6JQaHhvA",
+  authDomain: "biblioteca-cocina.firebaseapp.com",
+  projectId: "biblioteca-cocina",
+  storageBucket: "biblioteca-cocina.firebasestorage.app",
+  messagingSenderId: "659918832996",
+  appId: "1:659918832996:web:d893cdbac5322d80fce671"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const COL = "documentos";
+
+const CATS = [
+  {id:"libros",     name:"Libros",           color:"#2C3A5E"},
+  {id:"recetas",    name:"Recetas",          color:"#B23A32"},
+  {id:"fichas",     name:"Fichas técnicas",  color:"#B99244"},
+  {id:"appcc",      name:"Normativa · APPCC", color:"#4C7A5A"},
+  {id:"proveedores",name:"Proveedores",      color:"#7A5A82"},
+  {id:"catalogos",  name:"Catálogos",        color:"#47688C"},
+  {id:"menus",      name:"Menús",            color:"#C77A3A"},
+  {id:"formacion",  name:"Formación",        color:"#3A7A82"},
+];
+const catById = id => CATS.find(c => c.id === id) || CATS[0];
+const DIAS = ["L","M","X","J","V","S","D"];
+
+let DOCS = [];
+let activeCat = "todas";
+let query_ = "";
+
+/* ==================== ACCESO ==================== */
+const authScreen = document.getElementById("authScreen");
+const appEl = document.getElementById("app");
+const errEl = document.getElementById("authErr");
+const loginBtn = document.getElementById("loginBtn");
+
+async function doLogin(){
+  errEl.textContent = "";
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value;
+  if(!email || !pass){ errEl.textContent = "Escribe tu correo y contraseña."; return; }
+  loginBtn.disabled = true; loginBtn.textContent = "Entrando…";
+  try{ await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e){ errEl.textContent = "Correo o contraseña incorrectos."; loginBtn.disabled = false; loginBtn.textContent = "Entrar"; }
+}
+loginBtn.addEventListener("click", doLogin);
+document.getElementById("password").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+document.getElementById("email").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("password").focus(); });
+document.getElementById("logoutBtn").addEventListener("click", ()=>signOut(auth));
+
+onAuthStateChanged(auth, async user => {
+  if(user){ authScreen.classList.add("hidden"); appEl.classList.remove("hidden"); await loadDocs(); }
+  else{ appEl.classList.add("hidden"); authScreen.classList.remove("hidden"); loginBtn.disabled=false; loginBtn.textContent="Entrar"; document.getElementById("password").value=""; DOCS=[]; }
+});
+
+/* ==================== FIRESTORE ==================== */
+async function loadDocs(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = `<div class="loading">Cargando…</div>`;
+  try{
+    const q = query(collection(db, COL), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    DOCS = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    render();
+  }catch(e){
+    grid.innerHTML = `<div class="empty"><div class="mark">!</div><h3>No se pudieron cargar</h3><p>Revisa tu conexión y vuelve a intentarlo.</p></div>`;
+  }
+}
+
+async function saveDoc(){
+  const title = document.getElementById("f-title").value.trim();
+  if(!title){ document.getElementById("f-title").focus(); return; }
+  const btn = document.getElementById("saveDoc");
+  btn.disabled = true; btn.textContent = "Guardando…";
+  const cat = document.getElementById("f-cat").value;
+  const nuevo = {
+    title, cat,
+    tags: document.getElementById("f-tags").value.split(",").map(t=>t.trim()).filter(Boolean),
+    desc: document.getElementById("f-desc").value.trim(),
+    link: document.getElementById("f-link").value.trim(),
+    createdAt: serverTimestamp(),
+  };
+  if(cat === "proveedores"){
+    nuevo.contact = document.getElementById("f-contact").value.trim();
+    nuevo.phone = document.getElementById("f-phone").value.trim();
+    nuevo.dias = [...document.querySelectorAll("#daysPicker .day.on")].map(b=>b.dataset.d);
+  }
+  try{
+    await addDoc(collection(db, COL), nuevo);
+    hide("addOverlay");
+    activeCat="todas"; query_=""; document.getElementById("search").value="";
+    await loadDocs();
+  }catch(e){ alert("No se pudo guardar. Revisa tu conexión e inténtalo de nuevo."); }
+  finally{ btn.disabled=false; btn.textContent="Guardar"; }
+}
+
+async function removeDoc(id){
+  if(!confirm("¿Eliminar esta ficha de la biblioteca? (Si tenía un archivo en Drive, ese no se borra.)")) return;
+  try{ await deleteDoc(doc(db, COL, id)); hide("viewOverlay"); await loadDocs(); }
+  catch(e){ alert("No se pudo eliminar. Inténtalo de nuevo."); }
+}
+
+/* ==================== UTILIDADES ==================== */
+function parseDriveId(url){
+  if(!url) return null;
+  const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/, /\/d\/([a-zA-Z0-9_-]+)/];
+  for(const p of patterns){ const m = url.match(p); if(m) return m[1]; }
+  return null;
+}
+function escapeHtml(s){return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function currentList(){
+  const q = query_.trim().toLowerCase();
+  let list = DOCS.filter(d => activeCat==="todas" || d.cat===activeCat);
+  if(q){
+    list = list.filter(d =>
+      (d.title||"").toLowerCase().includes(q) || (d.desc||"").toLowerCase().includes(q) ||
+      (d.contact||"").toLowerCase().includes(q) || (d.tags||[]).some(t => t.toLowerCase().includes(q)));
+  }
+  return list;
+}
+
+/* ==================== IMPRESIÓN ==================== */
+function printHeadHtml(subtitulo){
+  const fecha = new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
+  return `<div class="p-head">
+    <div class="p-hanko">蔵</div>
+    <div><div class="p-title">Biblioteca · Hotel Guadiana</div>
+    <div class="p-meta">${subtitulo} · ${fecha}</div></div>
+  </div>`;
+}
+function itemHtml(d){
+  if(d.cat === "proveedores"){
+    const dias = (d.dias||[]).join(", ");
+    const linea = [
+      d.contact?`<b>Contacto:</b> ${escapeHtml(d.contact)}`:"",
+      d.phone?`<b>Tel:</b> ${escapeHtml(d.phone)}`:"",
+      dias?`<b>Reparto:</b> ${dias}`:"",
+    ].filter(Boolean).join(" &nbsp;·&nbsp; ");
+    return `<div class="p-item"><div class="n">${escapeHtml(d.title)}</div>
+      <div class="d">${linea || "—"}${d.desc?`<br>${escapeHtml(d.desc)}`:""}</div></div>`;
+  }
+  const extra = [
+    d.desc?escapeHtml(d.desc):"",
+    (d.tags&&d.tags.length)?`<b>Etiquetas:</b> ${d.tags.map(escapeHtml).join(", ")}`:"",
+    d.link?`<b>Enlace:</b> ${escapeHtml(d.link)}`:"",
+  ].filter(Boolean).join(" &nbsp;·&nbsp; ");
+  return `<div class="p-item"><div class="n">${escapeHtml(d.title)}</div>${extra?`<div class="d">${extra}</div>`:""}</div>`;
+}
+function printList(){
+  const list = currentList();
+  if(list.length===0){ alert("No hay nada que imprimir con este filtro."); return; }
+  const sub = (activeCat!=="todas" ? catById(activeCat).name : "Listado completo") +
+              (query_.trim()?` · búsqueda “${escapeHtml(query_.trim())}”`:"") +
+              ` · ${list.length} ${list.length===1?"ficha":"fichas"}`;
+  let body = "";
+  for(const c of CATS){
+    const items = list.filter(d => d.cat===c.id);
+    if(!items.length) continue;
+    body += `<div class="p-section"><div class="p-cat">${c.name} (${items.length})</div>${items.map(itemHtml).join("")}</div>`;
+  }
+  document.getElementById("printArea").innerHTML =
+    printHeadHtml(sub) + body + `<div class="p-foot">Biblioteca privada · Hotel Guadiana · documento de uso interno</div>`;
+  window.print();
+}
+function printOne(id){
+  const d = DOCS.find(x=>x.id===id); if(!d) return;
+  document.getElementById("printArea").innerHTML =
+    printHeadHtml(catById(d.cat).name) +
+    `<div class="p-section">${itemHtml(d)}</div>` +
+    `<div class="p-foot">Biblioteca privada · Hotel Guadiana · documento de uso interno</div>`;
+  window.print();
+}
+
+/* ==================== RENDER ==================== */
+function renderFilters(){
+  const el = document.getElementById("filters");
+  const all = [{id:"todas",name:"Todas"}, ...CATS];
+  el.innerHTML = all.map(c => `<button class="chip ${activeCat===c.id?'active':''}" data-cat="${c.id}">${c.name}</button>`).join("");
+  el.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { activeCat = b.dataset.cat; render(); }));
+}
+
+function render(){
+  const grid = document.getElementById("grid");
+  const list = currentList();
+  const q = query_.trim();
+  document.getElementById("count").innerHTML =
+    `<b>${list.length}</b> ${list.length===1?"ficha":"fichas"}` +
+    (activeCat!=="todas" ? ` en ${catById(activeCat).name}` : "") + (q ? ` · “${escapeHtml(q)}”` : "");
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.cat===activeCat));
+
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty">
+      <div class="mark">空</div>
+      <h3>${DOCS.length===0 ? "Tu biblioteca está vacía" : "Nada por aquí"}</h3>
+      <p>${DOCS.length===0 ? "Añade tu primera ficha y empieza a organizarlo todo." : "Prueba con otra categoría o búsqueda."}</p>
+      <button class="btn-add" id="emptyAdd"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Añadir</button>
+    </div>`;
+    const ea = document.getElementById("emptyAdd"); if(ea) ea.addEventListener("click", openAdd);
+    return;
+  }
+
+  grid.innerHTML = list.map((d,i) => {
+    const c = catById(d.cat);
+    const isProv = d.cat === "proveedores";
+    let middle;
+    if(isProv && (d.contact || d.phone)){
+      middle = `<div class="contact-line">
+        ${d.contact?`<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>${escapeHtml(d.contact)}</span>`:""}
+        ${d.phone?`<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.4c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg>${escapeHtml(d.phone)}</span>`:""}
+      </div>`;
+    } else { middle = d.desc ? `<p>${escapeHtml(d.desc)}</p>` : ""; }
+    return `<article class="doc" tabindex="0" data-id="${d.id}" style="--cat:${c.color};animation-delay:${i*40}ms">
+      <span class="kind">${c.name}</span>
+      <h3>${escapeHtml(d.title)}</h3>
+      ${middle}
+      <div class="tags">${(d.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>
+      <div class="open-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M10 14 21 3M21 14v7H3V3h7"/></svg>${isProv?"Ver ficha":"Abrir documento"}</div>
+    </article>`;
+  }).join("");
+
+  grid.querySelectorAll(".doc").forEach(el => {
+    const open = () => openViewer(el.dataset.id);
+    el.addEventListener("click", open);
+    el.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){e.preventDefault();open();} });
+  });
+}
+
+/* ==================== VISOR / FICHA ==================== */
+const printIco = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>`;
+
+function openViewer(id){
+  const d = DOCS.find(x => x.id===id); if(!d) return;
+  document.getElementById("viewTitle").textContent = d.title;
+  const content = document.getElementById("viewerContent");
+  const delBtn = `<button class="btn-del" data-del="${d.id}">Eliminar</button>`;
+  const driveId = parseDriveId(d.link);
+
+  if(d.cat === "proveedores"){
+    const telHref = (d.phone||"").replace(/[^+\d]/g,"");
+    const diasSet = new Set(d.dias||[]);
+    const diasHtml = DIAS.map(x=>`<div class="pday ${diasSet.has(x)?'on':''}">${x}</div>`).join("");
+    content.innerHTML = `
+      <div class="pfiche">
+        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V7l6-4 6 4v14M10 21v-4h4v4"/></svg></div>
+          <div><div class="lbl">Proveedor</div><div class="val">${escapeHtml(d.title)}</div></div></div>
+        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg></div>
+          <div><div class="lbl">Persona de contacto</div><div class="val ${d.contact?'':'muted'}">${d.contact?escapeHtml(d.contact):"—"}</div></div></div>
+        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.4c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg></div>
+          <div><div class="lbl">Teléfono</div><div class="val ${d.phone?'':'muted'}">${d.phone?`<a href="tel:${telHref}">${escapeHtml(d.phone)}</a>`:"—"}</div></div></div>
+        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3v4M8 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg></div>
+          <div><div class="lbl">Días de reparto</div><div class="pdays">${diasHtml}</div></div></div>
+      </div>
+      ${d.desc?`<div class="pnotes">${escapeHtml(d.desc)}</div>`:""}
+      ${driveId?`<iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>`:""}
+      <div class="viewer-meta">${delBtn}<div class="actions">
+        <button class="btn-vprint" data-print="${d.id}">${printIco} Imprimir ficha</button>
+        ${d.link?`<a href="${escapeHtml(d.link)}" target="_blank" rel="noopener">Ver catálogo en Drive ↗</a>`:""}
+      </div></div>`;
+  }
+  else{
+    if(driveId){
+      content.innerHTML = `
+        <iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>
+        <div class="viewer-meta">${delBtn}<div class="actions">
+          <button class="btn-vprint" data-drive="${escapeHtml(d.link)}">${printIco} Imprimir PDF</button>
+          <a href="${escapeHtml(d.link)}" target="_blank" rel="noopener">${catById(d.cat).name} · Abrir en Drive ↗</a>
+        </div></div>`;
+    }else{
+      content.innerHTML = `
+        <div class="viewer-fallback"><p>Este documento <b>no tiene enlace de Drive</b> todavía.</p><p style="margin-top:8px">Añade uno para poder ver el PDF aquí mismo.</p></div>
+        <div class="viewer-meta">${delBtn}<div class="actions"><button class="btn-vprint" data-print="${d.id}">${printIco} Imprimir ficha</button></div></div>`;
+    }
+  }
+  content.querySelector("[data-del]").addEventListener("click", e => removeDoc(e.currentTarget.dataset.del));
+  const pB = content.querySelector("[data-print]"); if(pB) pB.addEventListener("click", e => printOne(e.currentTarget.dataset.print));
+  const dB = content.querySelector("[data-drive]"); if(dB) dB.addEventListener("click", e => window.open(e.currentTarget.dataset.drive, "_blank", "noopener"));
+  show("viewOverlay");
+}
+
+/* ==================== AÑADIR ==================== */
+function buildDaysPicker(){
+  const el = document.getElementById("daysPicker");
+  el.innerHTML = DIAS.map(x=>`<button type="button" class="day" data-d="${x}">${x}</button>`).join("");
+  el.querySelectorAll(".day").forEach(b=>b.addEventListener("click", ()=>b.classList.toggle("on")));
+}
+function syncForm(){
+  const cat = document.getElementById("f-cat").value;
+  const isProv = cat === "proveedores";
+  document.getElementById("provFields").classList.toggle("hidden", !isProv);
+  document.getElementById("f-title-label").textContent = isProv ? "Nombre del proveedor" : "Título";
+  document.getElementById("f-title").placeholder = isProv ? "Ej. Pescadería del Sur" : "Ej. Plan APPCC 2026";
+  document.getElementById("f-link-label").innerHTML = isProv ? 'Catálogo o tarifa en Drive <span>(opcional)</span>' : "Enlace de Google Drive";
+  document.getElementById("f-desc-label").innerHTML = isProv ? 'Notas <span>(opcional)</span>' : 'Descripción <span>(opcional)</span>';
+  document.getElementById("f-desc").placeholder = isProv ? "Ej. Pedido mínimo, condiciones de pago…" : "Una línea para reconocerlo";
+}
+function openAdd(){
+  const sel = document.getElementById("f-cat");
+  sel.innerHTML = CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+  if(activeCat!=="todas") sel.value = activeCat;
+  ["f-title","f-tags","f-desc","f-link","f-contact","f-phone"].forEach(i=>{const e=document.getElementById(i);if(e)e.value="";});
+  document.querySelectorAll("#daysPicker .day.on").forEach(b=>b.classList.remove("on"));
+  syncForm();
+  show("addOverlay");
+  setTimeout(()=>document.getElementById("f-title").focus(),50);
+}
+
+/* ==================== OVERLAYS ==================== */
+function show(id){document.getElementById(id).classList.add("show");}
+function hide(id){document.getElementById(id).classList.remove("show");}
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>e.target.closest(".overlay").classList.remove("show")));
+document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click", e=>{ if(e.target===o) o.classList.remove("show"); }));
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("show")); });
+
+document.getElementById("openAdd").addEventListener("click", openAdd);
+document.getElementById("saveDoc").addEventListener("click", saveDoc);
+document.getElementById("printBtn").addEventListener("click", printList);
+document.getElementById("f-cat").addEventListener("change", syncForm);
+document.getElementById("search").addEventListener("input", e=>{ query_=e.target.value; render(); });
+
+/* ==================== INIT ==================== */
+renderFilters();
+buildDaysPicker();
+</script>
+</body>
+</html>
