@@ -128,7 +128,15 @@
   .btn-vprint:hover{background:var(--washi-2);color:var(--sumi)}
   .btn-vprint svg{width:15px;height:15px}
 
+  .filein{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+  .filebtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;border:1.5px dashed var(--line);background:#fff;border-radius:11px;cursor:pointer;font-weight:600;font-size:14px;color:var(--sumi-soft);transition:.16s;text-align:center}
+  .filebtn:hover{border-color:var(--ai);color:var(--ai);background:var(--washi-2)}
+  .filebtn svg{width:19px;height:19px;flex:0 0 auto}
+  .filebtn.chosen{border-style:solid;border-color:var(--ok);color:var(--ok)}
+
   .viewer-frame{width:100%;height:66vh;border:none;background:#fff}
+  .imgwrap{padding:20px;text-align:center;background:#fff}
+  .imgwrap img{max-width:100%;border-radius:8px}
   .viewer-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 26px;border-top:1px solid var(--line);font-size:13px;color:var(--sumi-soft)}
   .viewer-meta .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .viewer-meta a{color:var(--ai);font-weight:600;text-decoration:none}
@@ -248,9 +256,13 @@
       <div class="field"><label for="f-tags">Etiquetas <span>(por comas)</span></label><input id="f-tags" type="text" placeholder="pescado, temporada"></div>
       <div class="field"><label id="f-desc-label" for="f-desc">Descripción <span>(opcional)</span></label><textarea id="f-desc" placeholder="Una línea para reconocerlo"></textarea></div>
       <div class="field">
-        <label id="f-link-label" for="f-link">Enlace de Google Drive</label>
-        <input id="f-link" type="url" placeholder="https://drive.google.com/file/d/…/view">
-        <div class="hint" id="f-link-hint">Sube el PDF a Drive, pulsa <b>Compartir → Cualquiera con el enlace</b> y pega aquí el enlace.</div>
+        <label id="f-file-label">Archivo <span>(PDF o imagen, opcional)</span></label>
+        <input id="f-file" type="file" accept="application/pdf,image/*" class="filein">
+        <label for="f-file" class="filebtn" id="filebtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
+          <span id="filebtn-text">Elegir archivo del dispositivo</span>
+        </label>
+        <div class="hint" id="f-file-hint">Se sube solo y queda guardado. No necesitas Drive ni copiar enlaces.</div>
       </div>
     </div>
     <div class="mfoot">
@@ -277,6 +289,8 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDLe7TRJQFFxfTAvHwhqwrhcgK6JQaHhvA",
@@ -290,6 +304,7 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
+const storage = getStorage(fbApp);
 const COL = "documentos";
 
 const CATS = [
@@ -358,7 +373,6 @@ async function saveDoc(){
     title, cat,
     tags: document.getElementById("f-tags").value.split(",").map(t=>t.trim()).filter(Boolean),
     desc: document.getElementById("f-desc").value.trim(),
-    link: document.getElementById("f-link").value.trim(),
     createdAt: serverTimestamp(),
   };
   if(cat === "proveedores"){
@@ -367,6 +381,19 @@ async function saveDoc(){
     nuevo.dias = [...document.querySelectorAll("#daysPicker .day.on")].map(b=>b.dataset.d);
   }
   try{
+    const file = document.getElementById("f-file").files[0];
+    if(file){
+      btn.textContent = "Subiendo archivo…";
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const path = `archivos/${Date.now()}_${safe}`;
+      const sref = storageRef(storage, path);
+      await uploadBytes(sref, file);
+      nuevo.fileUrl = await getDownloadURL(sref);
+      nuevo.filePath = path;
+      nuevo.fileName = file.name;
+      nuevo.fileType = file.type;
+      btn.textContent = "Guardando…";
+    }
     await addDoc(collection(db, COL), nuevo);
     hide("addOverlay");
     activeCat="todas"; query_=""; document.getElementById("search").value="";
@@ -376,9 +403,16 @@ async function saveDoc(){
 }
 
 async function removeDoc(id){
-  if(!confirm("¿Eliminar esta ficha de la biblioteca? (Si tenía un archivo en Drive, ese no se borra.)")) return;
-  try{ await deleteDoc(doc(db, COL, id)); hide("viewOverlay"); await loadDocs(); }
-  catch(e){ alert("No se pudo eliminar. Inténtalo de nuevo."); }
+  if(!confirm("¿Eliminar esta ficha de la biblioteca? Se borrará también su archivo subido.")) return;
+  const d = DOCS.find(x=>x.id===id);
+  try{
+    if(d && d.filePath){
+      try{ await deleteObject(storageRef(storage, d.filePath)); }catch(_){}
+    }
+    await deleteDoc(doc(db, COL, id));
+    hide("viewOverlay");
+    await loadDocs();
+  }catch(e){ alert("No se pudo eliminar. Inténtalo de nuevo."); }
 }
 
 /* ==================== UTILIDADES ==================== */
@@ -515,6 +549,22 @@ function openViewer(id){
   const content = document.getElementById("viewerContent");
   const delBtn = `<button class="btn-del" data-del="${d.id}">Eliminar</button>`;
   const driveId = parseDriveId(d.link);
+  const media = () => {
+    if(d.fileUrl){
+      if((d.fileType||"").startsWith("image")) return `<div class="imgwrap"><img src="${escapeHtml(d.fileUrl)}" alt=""></div>`;
+      return `<iframe class="viewer-frame" src="${escapeHtml(d.fileUrl)}"></iframe>`;
+    }
+    if(driveId) return `<iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>`;
+    return "";
+  };
+  const fileActions = () => {
+    if(d.fileUrl) return `<button class="btn-vprint" data-open="${escapeHtml(d.fileUrl)}">${printIco} Imprimir</button>
+      <a href="${escapeHtml(d.fileUrl)}" target="_blank" rel="noopener">Abrir / descargar ↗</a>`;
+    if(d.link) return `<button class="btn-vprint" data-open="${escapeHtml(d.link)}">${printIco} Imprimir PDF</button>
+      <a href="${escapeHtml(d.link)}" target="_blank" rel="noopener">Abrir en Drive ↗</a>`;
+    return "";
+  };
+  const hasMedia = d.fileUrl || driveId;
 
   if(d.cat === "proveedores"){
     const telHref = (d.phone||"").replace(/[^+\d]/g,"");
@@ -532,29 +582,25 @@ function openViewer(id){
           <div><div class="lbl">Días de reparto</div><div class="pdays">${diasHtml}</div></div></div>
       </div>
       ${d.desc?`<div class="pnotes">${escapeHtml(d.desc)}</div>`:""}
-      ${driveId?`<iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>`:""}
+      ${media()}
       <div class="viewer-meta">${delBtn}<div class="actions">
         <button class="btn-vprint" data-print="${d.id}">${printIco} Imprimir ficha</button>
-        ${d.link?`<a href="${escapeHtml(d.link)}" target="_blank" rel="noopener">Ver catálogo en Drive ↗</a>`:""}
+        ${fileActions()}
       </div></div>`;
   }
   else{
-    if(driveId){
-      content.innerHTML = `
-        <iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>
-        <div class="viewer-meta">${delBtn}<div class="actions">
-          <button class="btn-vprint" data-drive="${escapeHtml(d.link)}">${printIco} Imprimir PDF</button>
-          <a href="${escapeHtml(d.link)}" target="_blank" rel="noopener">${catById(d.cat).name} · Abrir en Drive ↗</a>
-        </div></div>`;
+    if(hasMedia){
+      content.innerHTML = media() +
+        `<div class="viewer-meta">${delBtn}<div class="actions">${fileActions()}</div></div>`;
     }else{
       content.innerHTML = `
-        <div class="viewer-fallback"><p>Este documento <b>no tiene enlace de Drive</b> todavía.</p><p style="margin-top:8px">Añade uno para poder ver el PDF aquí mismo.</p></div>
+        <div class="viewer-fallback"><p>Este documento <b>no tiene archivo</b> todavía.</p><p style="margin-top:8px">Puedes eliminarlo y volver a añadirlo adjuntando el archivo.</p></div>
         <div class="viewer-meta">${delBtn}<div class="actions"><button class="btn-vprint" data-print="${d.id}">${printIco} Imprimir ficha</button></div></div>`;
     }
   }
   content.querySelector("[data-del]").addEventListener("click", e => removeDoc(e.currentTarget.dataset.del));
   const pB = content.querySelector("[data-print]"); if(pB) pB.addEventListener("click", e => printOne(e.currentTarget.dataset.print));
-  const dB = content.querySelector("[data-drive]"); if(dB) dB.addEventListener("click", e => window.open(e.currentTarget.dataset.drive, "_blank", "noopener"));
+  const oB = content.querySelector("[data-open]"); if(oB) oB.addEventListener("click", e => window.open(e.currentTarget.dataset.open, "_blank", "noopener"));
   show("viewOverlay");
 }
 
@@ -570,7 +616,7 @@ function syncForm(){
   document.getElementById("provFields").classList.toggle("hidden", !isProv);
   document.getElementById("f-title-label").textContent = isProv ? "Nombre del proveedor" : "Título";
   document.getElementById("f-title").placeholder = isProv ? "Ej. Pescadería del Sur" : "Ej. Plan APPCC 2026";
-  document.getElementById("f-link-label").innerHTML = isProv ? 'Catálogo o tarifa en Drive <span>(opcional)</span>' : "Enlace de Google Drive";
+  document.getElementById("f-file-label").innerHTML = isProv ? 'Catálogo o tarifa <span>(PDF o imagen, opcional)</span>' : 'Archivo <span>(PDF o imagen, opcional)</span>';
   document.getElementById("f-desc-label").innerHTML = isProv ? 'Notas <span>(opcional)</span>' : 'Descripción <span>(opcional)</span>';
   document.getElementById("f-desc").placeholder = isProv ? "Ej. Pedido mínimo, condiciones de pago…" : "Una línea para reconocerlo";
 }
@@ -578,8 +624,10 @@ function openAdd(){
   const sel = document.getElementById("f-cat");
   sel.innerHTML = CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
   if(activeCat!=="todas") sel.value = activeCat;
-  ["f-title","f-tags","f-desc","f-link","f-contact","f-phone"].forEach(i=>{const e=document.getElementById(i);if(e)e.value="";});
+  ["f-title","f-tags","f-desc","f-contact","f-phone","f-file"].forEach(i=>{const e=document.getElementById(i);if(e)e.value="";});
   document.querySelectorAll("#daysPicker .day.on").forEach(b=>b.classList.remove("on"));
+  const fb=document.getElementById("filebtn"); fb.classList.remove("chosen");
+  document.getElementById("filebtn-text").textContent="Elegir archivo del dispositivo";
   syncForm();
   show("addOverlay");
   setTimeout(()=>document.getElementById("f-title").focus(),50);
@@ -597,6 +645,13 @@ document.getElementById("saveDoc").addEventListener("click", saveDoc);
 document.getElementById("printBtn").addEventListener("click", printList);
 document.getElementById("f-cat").addEventListener("change", syncForm);
 document.getElementById("search").addEventListener("input", e=>{ query_=e.target.value; render(); });
+document.getElementById("f-file").addEventListener("change", e=>{
+  const f = e.target.files[0];
+  const fb = document.getElementById("filebtn");
+  const txt = document.getElementById("filebtn-text");
+  if(f){ fb.classList.add("chosen"); txt.textContent = f.name; }
+  else { fb.classList.remove("chosen"); txt.textContent = "Elegir archivo del dispositivo"; }
+});
 
 /* ==================== INIT ==================== */
 renderFilters();
