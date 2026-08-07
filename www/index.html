@@ -137,12 +137,13 @@
   .viewer-frame{width:100%;height:66vh;border:none;background:#fff}
   .imgwrap{padding:20px;text-align:center;background:#fff}
   .imgwrap img{max-width:100%;border-radius:8px}
-  .pdf-mobile{padding:52px 26px;text-align:center;background:#fff}
-  .pdf-mobile svg{width:54px;height:54px;color:var(--ai-soft);margin-bottom:16px}
-  .pdf-mobile p{font-family:"Shippori Mincho",serif;font-size:19px;color:var(--sumi);margin-bottom:22px}
-  .btn-openpdf{display:inline-flex;align-items:center;gap:9px;padding:15px 30px;border:none;border-radius:12px;background:var(--ai);color:#fff;font:inherit;font-weight:700;font-size:15.5px;cursor:pointer}
+  .pdf-scroll{max-height:72vh;overflow-y:auto;background:#3a3d42;padding:14px;-webkit-overflow-scrolling:touch}
+  .pdf-page{display:block;width:100%;height:auto;margin:0 auto 12px;box-shadow:0 2px 10px rgba(0,0,0,.35);background:#fff;border-radius:2px}
+  .pdf-loading{padding:56px 20px;text-align:center;color:#e8e6e1;font-size:14px}
+  .pdf-error{padding:44px 24px;text-align:center;color:var(--sumi-soft);background:#fff}
+  .pdf-error p{margin-bottom:18px}
+  .btn-openpdf{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;border:none;border-radius:12px;background:var(--ai);color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
   .btn-openpdf:active{transform:translateY(1px)}
-  .pdf-mobile-hint{display:block;margin-top:15px;font-size:12.5px;color:var(--sumi-soft)}
   .viewer-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 26px;border-top:1px solid var(--line);font-size:13px;color:var(--sumi-soft)}
   .viewer-meta .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .viewer-meta a{color:var(--ai);font-weight:600;text-decoration:none}
@@ -430,6 +431,43 @@ function parseDriveId(url){
   return null;
 }
 function escapeHtml(s){return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+
+/* ==================== VISOR PDF (PDF.js) ==================== */
+const PDFJS_VER = "6.1.200";
+let pdfjsLib = null;
+async function ensurePdfjs(){
+  if(pdfjsLib) return pdfjsLib;
+  pdfjsLib = await import(`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VER}/pdf.min.mjs`);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VER}/pdf.worker.min.mjs`;
+  return pdfjsLib;
+}
+async function renderPdf(url, container){
+  if(!container) return;
+  container.innerHTML = `<div class="pdf-loading">Cargando documento…</div>`;
+  try{
+    const lib = await ensurePdfjs();
+    const pdf = await lib.getDocument({ url }).promise;
+    container.innerHTML = "";
+    const cw = Math.max((container.clientWidth || 700) - 28, 200);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    for(let n=1; n<=pdf.numPages; n++){
+      const page = await pdf.getPage(n);
+      const base = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale: (cw / base.width) * dpr });
+      const canvas = document.createElement("canvas");
+      canvas.className = "pdf-page";
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      container.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    }
+  }catch(e){
+    container.innerHTML = `<div class="pdf-error"><p>No se pudo mostrar el documento aquí.</p>
+      <button class="btn-openpdf" data-open="${escapeHtml(url)}">Abrir con el visor del móvil</button></div>`;
+    const b = container.querySelector("[data-open]");
+    if(b) b.addEventListener("click", e => window.open(e.currentTarget.dataset.open, "_blank", "noopener"));
+  }
+}
 function currentList(){
   const q = query_.trim().toLowerCase();
   let list = DOCS.filter(d => activeCat==="todas" || d.cat===activeCat);
@@ -556,16 +594,12 @@ function openViewer(id){
   const content = document.getElementById("viewerContent");
   const delBtn = `<button class="btn-del" data-del="${d.id}">Eliminar</button>`;
   const driveId = parseDriveId(d.link);
+  let pdfToRender = null;
   const media = () => {
     if(d.fileUrl){
       if((d.fileType||"").startsWith("image")) return `<div class="imgwrap"><img src="${escapeHtml(d.fileUrl)}" alt=""></div>`;
-      if(IS_MOBILE) return `<div class="pdf-mobile">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-        <p>Documento listo</p>
-        <button class="btn-openpdf" data-open="${escapeHtml(d.fileUrl)}">Abrir documento</button>
-        <span class="pdf-mobile-hint">Se abre con el visor de tu móvil</span>
-      </div>`;
-      return `<iframe class="viewer-frame" src="${escapeHtml(d.fileUrl)}"></iframe>`;
+      pdfToRender = d.fileUrl;
+      return `<div class="pdf-scroll" id="pdfScroll"></div>`;
     }
     if(driveId) return `<iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>`;
     return "";
@@ -614,6 +648,7 @@ function openViewer(id){
   content.querySelector("[data-del]").addEventListener("click", e => removeDoc(e.currentTarget.dataset.del));
   const pB = content.querySelector("[data-print]"); if(pB) pB.addEventListener("click", e => printOne(e.currentTarget.dataset.print));
   const oB = content.querySelectorAll("[data-open]"); oB.forEach(b => b.addEventListener("click", e => window.open(e.currentTarget.dataset.open, "_blank", "noopener")));
+  if(pdfToRender) renderPdf(pdfToRender, document.getElementById("pdfScroll"));
   show("viewOverlay");
 }
 
