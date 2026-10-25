@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Biblioteca · Hotel Guadiana</title>
+<meta name="theme-color" content="#FAF8F3">
+<title>Biblioteca · Cocina</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
@@ -21,7 +25,10 @@
     background:radial-gradient(circle at 20% 30%, rgba(185,146,68,.03), transparent 40%),radial-gradient(circle at 80% 70%, rgba(44,58,94,.03), transparent 40%)}
   .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 24px}
   .hidden{display:none !important}
+  body.native .web-only{display:none !important}
+  body:not(.native) .native-only{display:none !important}
 
+  /* ==================== ACCESO ==================== */
   .auth{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--washi)}
   .auth-card{width:100%;max-width:380px;text-align:center;animation:pop .3s both}
   .auth .hanko{width:70px;height:70px;margin:0 auto 22px;border-radius:14px;border:2.5px solid var(--shu);color:var(--shu);
@@ -34,8 +41,13 @@
   .auth button{width:100%;padding:14px;border:none;border-radius:11px;cursor:pointer;background:var(--ai);color:#fff;font:inherit;font-weight:700;font-size:15px;transition:background .18s;margin-top:4px}
   .auth button:hover{background:#232f4d}
   .auth button:disabled{opacity:.6;cursor:not-allowed}
+  .auth button.ghost{background:#fff;color:var(--sumi-soft);border:1px solid var(--line);margin-top:10px}
+  .auth button.ghost:hover{background:var(--washi-2)}
   .auth .err{color:var(--shu);font-size:13.5px;margin-top:14px;min-height:18px;font-weight:500}
+  .na-text{font-size:14px;color:var(--sumi-soft);line-height:1.6;margin-bottom:14px;text-align:left}
+  .na-uid{display:block;font-family:ui-monospace,Consolas,monospace;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px;margin-bottom:12px;word-break:break-all;user-select:all}
 
+  /* ==================== CABECERA ==================== */
   header.top{padding:34px 0 22px;border-bottom:1px solid var(--line)}
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
   .brand{display:flex;align-items:center;gap:16px}
@@ -48,7 +60,16 @@
   .logout{padding:9px 15px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600;color:var(--sumi-soft);white-space:nowrap;transition:.15s}
   .logout:hover{background:var(--washi-2);color:var(--sumi)}
 
-  .toolbar{display:flex;gap:12px;align-items:center;margin:24px 0 18px;flex-wrap:wrap}
+  .offline{margin-top:18px;padding:10px 14px;border-radius:10px;background:#FBF4E4;border:1px solid #EAD9AE;color:#6B5320;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:9px}
+  .offline svg{width:16px;height:16px;flex:0 0 auto}
+
+  /* Selector de centro */
+  .centros{display:inline-flex;margin-top:22px;padding:4px;background:var(--washi-2);border-radius:12px;gap:2px;flex-wrap:wrap}
+  .centro{padding:8px 15px;border:none;background:transparent;border-radius:9px;font:inherit;font-size:13.5px;font-weight:600;color:var(--sumi-soft);cursor:pointer;transition:.15s;white-space:nowrap}
+  .centro:hover{color:var(--sumi)}
+  .centro.active{background:#fff;color:var(--ai);box-shadow:0 1px 3px rgba(33,31,27,.1)}
+
+  .toolbar{display:flex;gap:12px;align-items:center;margin:18px 0 18px;flex-wrap:wrap}
   .search{position:relative;flex:1 1 300px;min-width:200px}
   .search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--sumi-soft)}
   .search input{width:100%;padding:13px 16px 13px 44px;border:1px solid var(--line);background:#fff;border-radius:11px;font:inherit;font-size:15px;color:var(--sumi);transition:border-color .18s, box-shadow .18s}
@@ -66,16 +87,23 @@
   .chip{padding:7px 15px;border:1px solid var(--line);background:#fff;border-radius:100px;font:inherit;font-size:13.5px;font-weight:500;color:var(--sumi-soft);cursor:pointer;transition:all .16s}
   .chip:hover{border-color:var(--ai-soft);color:var(--ai)}
   .chip.active{background:var(--sumi);border-color:var(--sumi);color:var(--washi);font-weight:700}
+  .chip .n{opacity:.55;font-weight:500;margin-left:4px}
   .count{margin:16px 2px 22px;font-size:13px;color:var(--sumi-soft);letter-spacing:.3px}
   .count b{color:var(--sumi);font-weight:700}
 
+  /* ==================== TARJETAS ==================== */
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;padding-bottom:80px}
-  .doc{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;cursor:pointer;overflow:hidden;transition:transform .16s, box-shadow .16s, border-color .16s;animation:rise .4s both}
+  .doc{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;cursor:pointer;overflow:hidden;transition:transform .16s, box-shadow .16s, border-color .16s}
+  .doc.anim{animation:rise .4s both}
   @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   .doc:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#d6cfbf}
   .doc:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
   .doc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cat,var(--ai))}
-  .doc .kind{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--cat,var(--ai));margin-bottom:12px}
+  .doc .krow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .doc .kind{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--cat,var(--ai))}
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--washi-2);color:var(--sumi-soft)}
+  .badge.hoy{background:var(--prov);color:#fff}
+  .badge.pend{background:#FBF4E4;color:#6B5320}
   .doc h3{font-family:"Shippori Mincho",serif;font-weight:600;font-size:19px;line-height:1.3;margin-bottom:8px;color:var(--sumi)}
   .doc p{font-size:13.5px;color:var(--sumi-soft);line-height:1.55;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .doc .contact-line{font-size:13px;color:var(--sumi-soft);margin-bottom:14px;display:flex;flex-direction:column;gap:3px}
@@ -92,13 +120,14 @@
   .empty p{font-size:14px;max-width:340px;margin:0 auto 20px}
   .loading{grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--sumi-soft);font-size:14px}
 
+  /* ==================== MODALES ==================== */
   .overlay{position:fixed;inset:0;z-index:50;background:rgba(33,31,27,.42);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
   .overlay.show{display:flex;animation:fade .2s}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   .modal{background:var(--washi);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(33,31,27,.25);animation:pop .24s both}
   @keyframes pop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
   .modal.viewer{max-width:920px}
-  .mhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--washi);z-index:2}
+  .mhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--washi);z-index:3}
   .mhead h2{font-family:"Shippori Mincho",serif;font-weight:600;font-size:20px}
   .mhead .close{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--sumi-soft);flex:0 0 auto;transition:.15s}
   .mhead .close:hover{background:var(--washi-2);color:var(--sumi)}
@@ -110,8 +139,8 @@
   .field textarea{resize:vertical;min-height:74px}
   .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--ai);box-shadow:0 0 0 3px rgba(44,58,94,.1)}
   .field .hint{font-size:12px;color:var(--sumi-soft);margin-top:6px;line-height:1.5}
-  .field .hint b{color:var(--sumi)}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:520px){ .row2{grid-template-columns:1fr;gap:0} }
   .days{display:flex;gap:7px;flex-wrap:wrap}
   .day{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font:inherit;font-weight:700;font-size:13.5px;color:var(--sumi-soft);transition:.15s}
   .day:hover{border-color:var(--prov)}
@@ -119,37 +148,47 @@
   .mfoot{display:flex;gap:10px;justify-content:flex-end;padding:18px 26px 24px}
   .btn-ghost{padding:11px 18px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--sumi-soft)}
   .btn-ghost:hover{background:var(--washi-2)}
-  .btn-save{padding:11px 22px;border:none;background:var(--ai);color:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;font-size:14px}
+  .btn-save{padding:11px 22px;border:none;background:var(--ai);color:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;font-size:14px;min-width:110px}
   .btn-save:hover{background:#232f4d}
-  .btn-save:disabled{opacity:.5;cursor:not-allowed}
-  .btn-del{padding:11px 18px;border:1px solid #e4c9c6;background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--shu);margin-right:auto}
+  .btn-save:disabled{opacity:.6;cursor:not-allowed}
+  .btn-del{padding:11px 18px;border:1px solid #e4c9c6;background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--shu)}
   .btn-del:hover{background:#fbf0ef}
-  .btn-vprint{padding:11px 16px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--sumi-soft);display:inline-flex;align-items:center;gap:7px}
+  .btn-vprint{padding:11px 16px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:14px;color:var(--sumi-soft);display:inline-flex;align-items:center;gap:7px;text-decoration:none}
   .btn-vprint:hover{background:var(--washi-2);color:var(--sumi)}
   .btn-vprint svg{width:15px;height:15px}
+  .btn-vprint:disabled{opacity:.5;cursor:not-allowed}
 
   .filein{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
   .filebtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;border:1.5px dashed var(--line);background:#fff;border-radius:11px;cursor:pointer;font-weight:600;font-size:14px;color:var(--sumi-soft);transition:.16s;text-align:center}
   .filebtn:hover{border-color:var(--ai);color:var(--ai);background:var(--washi-2)}
   .filebtn svg{width:19px;height:19px;flex:0 0 auto}
   .filebtn.chosen{border-style:solid;border-color:var(--ok);color:var(--ok)}
+  .curfile{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;margin-bottom:10px;background:#fff;border:1px solid var(--line);border-radius:9px;font-size:13.5px}
+  .curfile .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sumi)}
+  .curfile.removed .nm{text-decoration:line-through;color:var(--sumi-soft)}
+  .curfile button{flex:0 0 auto;border:none;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--shu);cursor:pointer}
+  .curfile.removed button{color:var(--ai)}
 
+  /* ==================== VISOR ==================== */
   .viewer-frame{width:100%;height:66vh;border:none;background:#fff}
   .imgwrap{padding:20px;text-align:center;background:#fff}
   .imgwrap img{max-width:100%;border-radius:8px}
-  .pdf-scroll{max-height:72vh;overflow-y:auto;background:#3a3d42;padding:14px;-webkit-overflow-scrolling:touch}
-  .pdf-page{display:block;width:100%;height:auto;margin:0 auto 12px;box-shadow:0 2px 10px rgba(0,0,0,.35);background:#fff;border-radius:2px}
+  .pdf-scroll{position:relative;max-height:72vh;overflow-y:auto;background:#3a3d42;padding:14px;-webkit-overflow-scrolling:touch}
+  .pdf-slot{width:100%;margin:0 auto 12px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.35);border-radius:2px;position:relative}
+  .pdf-slot canvas{display:block;width:100%;height:100%;border-radius:2px}
+  .pdf-slot .pn{position:absolute;inset:0;display:grid;place-items:center;color:#c3bcae;font-size:13px}
+  .pdf-counter{position:sticky;top:0;z-index:2;width:max-content;margin:0 auto 10px;padding:5px 12px;border-radius:100px;background:rgba(20,20,22,.75);color:#fff;font-size:12.5px;font-weight:600}
   .pdf-loading{padding:56px 20px;text-align:center;color:#e8e6e1;font-size:14px}
+  .media-loading{padding:56px 20px;text-align:center;color:var(--sumi-soft);font-size:14px;background:#fff}
   .pdf-error{padding:44px 24px;text-align:center;color:var(--sumi-soft);background:#fff}
   .pdf-error p{margin-bottom:18px}
   .btn-openpdf{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;border:none;border-radius:12px;background:var(--ai);color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
-  .btn-openpdf:active{transform:translateY(1px)}
   .viewer-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 26px;border-top:1px solid var(--line);font-size:13px;color:var(--sumi-soft)}
   .viewer-meta .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .viewer-meta a{color:var(--ai);font-weight:600;text-decoration:none}
-  .viewer-meta a:hover{text-decoration:underline}
+  .viewer-meta .left{display:flex;gap:10px;flex-wrap:wrap}
   .viewer-fallback{padding:50px 26px;text-align:center;color:var(--sumi-soft)}
   .viewer-fallback b{color:var(--sumi)}
+  .vinfo{padding:12px 26px;font-size:12.5px;color:var(--sumi-soft);border-top:1px solid var(--line)}
 
   .pfiche{padding:26px}
   .prow{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
@@ -157,22 +196,35 @@
   .prow .ico{width:38px;height:38px;flex:0 0 auto;border-radius:10px;background:var(--washi-2);display:grid;place-items:center;color:var(--prov)}
   .prow .ico svg{width:18px;height:18px}
   .prow .lbl{font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sumi-soft);margin-bottom:3px}
-  .prow .val{font-size:16px;color:var(--sumi);font-weight:500}
+  .prow .val{font-size:16px;color:var(--sumi);font-weight:500;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .prow .val a{color:var(--ai);text-decoration:none;font-weight:700}
   .prow .val a:hover{text-decoration:underline}
   .prow .val.muted{color:var(--sumi-soft);font-weight:400;font-size:14.5px}
+  .prow .val a.wa{font-size:12.5px;padding:4px 10px;border-radius:100px;background:#E7F3EA;color:#2F6B3F}
   .pdays{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
   .pday{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-size:12.5px;font-weight:700;background:var(--washi-2);color:#c3bcae}
   .pday.on{background:var(--prov);color:#fff}
-  .pnotes{padding:16px 26px;border-top:1px solid var(--line);font-size:14px;color:var(--sumi-soft);line-height:1.6}
+  .pday.today{box-shadow:0 0 0 2px var(--kin)}
+  .pnotes{padding:16px 26px;border-top:1px solid var(--line);font-size:14px;color:var(--sumi-soft);line-height:1.6;white-space:pre-line}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:200;background:var(--sumi);color:var(--washi);padding:12px 18px;border-radius:11px;font-size:14px;font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;max-width:calc(100% - 32px);text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
 
   footer{border-top:1px solid var(--line);padding:22px 0 40px;text-align:center;color:var(--sumi-soft);font-size:12.5px;letter-spacing:.3px}
+
+  @media (max-width:520px){
+    .wrap{padding:0 16px}
+    header.top{padding:24px 0 18px}
+    .brand h1{font-size:23px}
+    .hanko-sm{width:46px;height:46px;font-size:20px}
+    .mhead,.mbody,.mfoot,.viewer-meta,.pfiche{padding-left:18px;padding-right:18px}
+  }
 
   /* ==================== ÁREA DE IMPRESIÓN ==================== */
   #printArea{display:none}
   @media print{
     body::before{display:none}
-    .wrap, .auth, .overlay{display:none !important}
+    .wrap, .auth, .overlay, .toast{display:none !important}
     #printArea{display:block !important;color:#000;font-family:"Zen Kaku Gothic New",system-ui,sans-serif;padding:0}
     .p-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #000;padding-bottom:14px;margin-bottom:8px}
     .p-hanko{width:44px;height:44px;border:2px solid #000;border-radius:8px;display:grid;place-items:center;font-family:"Shippori Mincho",serif;font-weight:700;font-size:20px}
@@ -185,6 +237,9 @@
     .p-item .d{font-size:12px;color:#333;margin-top:2px;line-height:1.5}
     .p-item .d b{color:#000}
     .p-foot{margin-top:24px;padding-top:10px;border-top:1px solid #999;font-size:10px;color:#666;text-align:center}
+    .p-page{break-after:page;text-align:center}
+    .p-page:last-child{break-after:auto}
+    .p-page img{max-width:100%;max-height:25cm}
     @page{margin:1.6cm}
   }
 </style>
@@ -196,11 +251,24 @@
   <div class="auth-card">
     <div class="hanko">蔵</div>
     <h1>Biblioteca</h1>
-    <div class="sub">Hotel Guadiana</div>
+    <div class="sub">Cocina</div>
     <input id="email" type="email" placeholder="Correo electrónico" autocomplete="username">
     <input id="password" type="password" placeholder="Contraseña" autocomplete="current-password">
     <button id="loginBtn">Entrar</button>
     <div class="err" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ==================== SIN PERMISO ==================== -->
+<div class="auth hidden" id="noAccess">
+  <div class="auth-card">
+    <div class="hanko">蔵</div>
+    <h1>Sin acceso</h1>
+    <div class="sub">Cuenta no autorizada</div>
+    <p class="na-text">Has entrado, pero esta cuenta no está en la lista de permitidos. Para darle acceso, crea en Firestore un documento en la colección <b>permitidos</b> cuyo ID sea este UID:</p>
+    <code class="na-uid" id="naUid"></code>
+    <button id="naCopy">Copiar UID</button>
+    <button class="ghost" id="naLogout">Cerrar sesión</button>
   </div>
 </div>
 
@@ -210,18 +278,23 @@
     <div class="topbar">
       <div class="brand">
         <div class="hanko-sm" aria-hidden="true">蔵</div>
-        <div><h1>Biblioteca</h1><span class="sub">Hotel Guadiana · <em>Cocina</em></span></div>
+        <div><h1>Biblioteca</h1><span class="sub">Cocina · <em id="centroLabel">Todos los centros</em></span></div>
       </div>
       <button class="logout" id="logoutBtn">Cerrar sesión</button>
     </div>
+    <div class="offline hidden" id="offline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 2l20 20M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.7M19 12.9a10 10 0 0 0-2.3-1.6M1.4 9a16 16 0 0 1 4.7-2.9M22.6 9A16 16 0 0 0 10.7 5M12 20h.01"/></svg>
+      Sin conexión · estás viendo la copia guardada en este dispositivo
+    </div>
+    <div class="centros" id="centros" role="tablist" aria-label="Centro"></div>
   </header>
 
   <div class="toolbar">
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="search" type="search" placeholder="Buscar por nombre, etiqueta o descripción…" autocomplete="off">
+      <input id="search" type="search" placeholder="Buscar por nombre, etiqueta, contacto…" autocomplete="off">
     </div>
-    <button class="btn-print" id="printBtn" title="Imprimir el listado que ves">
+    <button class="btn-print web-only" id="printBtn" title="Imprimir el listado que ves">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
       Imprimir
     </button>
@@ -235,13 +308,14 @@
   <div class="count" id="count"></div>
   <div class="grid" id="grid"></div>
 
-  <footer>Biblioteca privada · Hotel Guadiana</footer>
+  <footer>Biblioteca privada · Cocina</footer>
 </div>
 
 <!-- Área que se imprime -->
 <div id="printArea"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- Modal: añadir -->
+<!-- Modal: añadir / editar -->
 <div class="overlay" id="addOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addTitle">
     <div class="mhead">
@@ -249,27 +323,36 @@
       <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="mbody">
-      <div class="field"><label for="f-cat">Categoría</label><select id="f-cat"></select></div>
-      <div class="field"><label id="f-title-label" for="f-title">Título</label><input id="f-title" type="text" placeholder="Ej. Plan APPCC 2026"></div>
+      <div class="row2">
+        <div class="field"><label for="f-cat">Categoría</label><select id="f-cat"></select></div>
+        <div class="field"><label for="f-centro">Centro</label><select id="f-centro"></select></div>
+      </div>
+      <div class="field"><label id="f-title-label" for="f-title">Título</label><input id="f-title" type="text" maxlength="200" placeholder="Ej. Plan APPCC 2026"></div>
 
       <div id="provFields" class="hidden">
         <div class="row2">
           <div class="field"><label for="f-contact">Persona de contacto</label><input id="f-contact" type="text" placeholder="Ej. María López"></div>
-          <div class="field"><label for="f-phone">Teléfono</label><input id="f-phone" type="tel" placeholder="Ej. 926 000 000"></div>
+          <div class="field"><label for="f-phone">Teléfono</label><input id="f-phone" type="tel" placeholder="Ej. 600 000 000"></div>
         </div>
+        <div class="field"><label for="f-email">Correo para pedidos <span>(opcional)</span></label><input id="f-email" type="email" placeholder="pedidos@proveedor.es"></div>
         <div class="field"><label>Días de reparto</label><div class="days" id="daysPicker"></div></div>
+        <div class="row2">
+          <div class="field"><label for="f-limite">Hora límite de pedido</label><input id="f-limite" type="text" placeholder="Ej. 12:00 del día anterior"></div>
+          <div class="field"><label for="f-minimo">Pedido mínimo</label><input id="f-minimo" type="text" placeholder="Ej. 60 €"></div>
+        </div>
       </div>
 
       <div class="field"><label for="f-tags">Etiquetas <span>(por comas)</span></label><input id="f-tags" type="text" placeholder="pescado, temporada"></div>
       <div class="field"><label id="f-desc-label" for="f-desc">Descripción <span>(opcional)</span></label><textarea id="f-desc" placeholder="Una línea para reconocerlo"></textarea></div>
       <div class="field">
         <label id="f-file-label">Archivo <span>(PDF o imagen, opcional)</span></label>
+        <div class="curfile hidden" id="curfile"><span class="nm" id="curfileName"></span><button type="button" id="curfileBtn">Quitar</button></div>
         <input id="f-file" type="file" accept="application/pdf,image/*" class="filein">
         <label for="f-file" class="filebtn" id="filebtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
           <span id="filebtn-text">Elegir archivo del dispositivo</span>
         </label>
-        <div class="hint" id="f-file-hint">Se sube solo y queda guardado. No necesitas Drive ni copiar enlaces.</div>
+        <div class="hint" id="f-file-hint">Máximo 25 MB. Las fotos grandes se reducen solas antes de subirlas.</div>
       </div>
     </div>
     <div class="mfoot">
@@ -294,9 +377,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp }
+import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
+         collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, deleteField }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject }
+import { getStorage, ref as storageRef, uploadBytesResumable, getBlob, getDownloadURL, deleteObject }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
@@ -310,10 +394,15 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
+let db;
+try{
+  // Caché local: la lista se ve aunque no haya conexión, y lo que guardes sin red se sube después.
+  db = initializeFirestore(fbApp, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+}catch(_){ db = getFirestore(fbApp); }
 const storage = getStorage(fbApp);
 const COL = "documentos";
 
+/* ==================== CONFIGURACIÓN ==================== */
 const CATS = [
   {id:"libros",     name:"Libros",           color:"#2C3A5E"},
   {id:"recetas",    name:"Recetas",          color:"#B23A32"},
@@ -324,102 +413,216 @@ const CATS = [
   {id:"menus",      name:"Menús",            color:"#C77A3A"},
   {id:"formacion",  name:"Formación",        color:"#3A7A82"},
 ];
+// Centros. El "id" se guarda en cada ficha: no lo cambies. El "name" y el "short" sí puedes cambiarlos cuando quieras.
+const CENTROS = [
+  {id:"guadiana", name:"Hotel Guadiana", short:"Guadiana"},
+  {id:"hotel2",   name:"Segundo hotel",  short:"Hotel 2"},
+];
+const AMBOS = "ambos";
+const CENTRO_FICHAS_ANTIGUAS = "guadiana";   // las fichas creadas antes de existir este campo
+const MAX_MB = 25;
+
 const catById = id => CATS.find(c => c.id === id) || CATS[0];
+const centroDe = d => d.centro || CENTRO_FICHAS_ANTIGUAS;
+const centroName = id => id===AMBOS ? "Ambos centros" : (CENTROS.find(c=>c.id===id)||{}).name || id;
+const centroShort = id => id===AMBOS ? "Ambos" : (CENTROS.find(c=>c.id===id)||{}).short || id;
 const DIAS = ["L","M","X","J","V","S","D"];
-const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const HOY = DIAS[(new Date().getDay()+6)%7];
+const IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+if(IS_NATIVE) document.body.classList.add("native");
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k,def){ try{ const v = localStorage.getItem(k); return v===null?def:v; }catch(_){ return def; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(_){} }
+};
 
 let DOCS = [];
 let activeCat = "todas";
+let activeCentro = store.get("bib.centro","todos");
+if(activeCentro!=="todos" && !CENTROS.some(c=>c.id===activeCentro)) activeCentro = "todos";
 let query_ = "";
+let unsub = null;
+let firstPaint = true;
+let editingId = null;
+let quitarArchivo = false;
+
+class AvisoUsuario extends Error {}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /* ==================== ACCESO ==================== */
-const authScreen = document.getElementById("authScreen");
-const appEl = document.getElementById("app");
-const errEl = document.getElementById("authErr");
-const loginBtn = document.getElementById("loginBtn");
-
+const loginBtn = $("loginBtn");
 async function doLogin(){
-  errEl.textContent = "";
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value;
-  if(!email || !pass){ errEl.textContent = "Escribe tu correo y contraseña."; return; }
+  $("authErr").textContent = "";
+  const email = $("email").value.trim();
+  const pass = $("password").value;
+  if(!email || !pass){ $("authErr").textContent = "Escribe tu correo y contraseña."; return; }
   loginBtn.disabled = true; loginBtn.textContent = "Entrando…";
   try{ await signInWithEmailAndPassword(auth, email, pass); }
-  catch(e){ errEl.textContent = "Correo o contraseña incorrectos."; loginBtn.disabled = false; loginBtn.textContent = "Entrar"; }
+  catch(e){
+    $("authErr").textContent = (e.code==="auth/network-request-failed") ? "Sin conexión. Inténtalo cuando tengas red." : "Correo o contraseña incorrectos.";
+    loginBtn.disabled = false; loginBtn.textContent = "Entrar";
+  }
 }
 loginBtn.addEventListener("click", doLogin);
-document.getElementById("password").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
-document.getElementById("email").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("password").focus(); });
-document.getElementById("logoutBtn").addEventListener("click", ()=>signOut(auth));
-
-onAuthStateChanged(auth, async user => {
-  if(user){ authScreen.classList.add("hidden"); appEl.classList.remove("hidden"); await loadDocs(); }
-  else{ appEl.classList.add("hidden"); authScreen.classList.remove("hidden"); loginBtn.disabled=false; loginBtn.textContent="Entrar"; document.getElementById("password").value=""; DOCS=[]; }
+$("password").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+$("email").addEventListener("keydown", e=>{ if(e.key==="Enter") $("password").focus(); });
+$("logoutBtn").addEventListener("click", ()=>signOut(auth));
+$("naLogout").addEventListener("click", ()=>signOut(auth));
+$("naCopy").addEventListener("click", async ()=>{
+  try{ await navigator.clipboard.writeText($("naUid").textContent); toast("UID copiado"); }
+  catch(_){ toast("Mantén pulsado el código para copiarlo"); }
 });
 
-/* ==================== FIRESTORE ==================== */
-async function loadDocs(){
-  const grid = document.getElementById("grid");
-  grid.innerHTML = `<div class="loading">Cargando…</div>`;
-  try{
-    const q = query(collection(db, COL), orderBy("createdAt", "desc"));
-    const snap = await getDocs(q);
-    DOCS = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    render();
-  }catch(e){
-    grid.innerHTML = `<div class="empty"><div class="mark">!</div><h3>No se pudieron cargar</h3><p>Revisa tu conexión y vuelve a intentarlo.</p></div>`;
+onAuthStateChanged(auth, user => {
+  if(user){
+    $("authScreen").classList.add("hidden"); $("noAccess").classList.add("hidden"); $("app").classList.remove("hidden");
+    subscribeDocs(user);
+  }else{
+    if(unsub){ unsub(); unsub = null; }
+    closeAllOverlays();
+    $("app").classList.add("hidden"); $("noAccess").classList.add("hidden"); $("authScreen").classList.remove("hidden");
+    loginBtn.disabled=false; loginBtn.textContent="Entrar"; $("password").value=""; DOCS=[]; firstPaint=true;
   }
+});
+
+function showNoAccess(user){
+  if(unsub){ unsub(); unsub = null; }
+  $("app").classList.add("hidden");
+  $("naUid").textContent = user.uid;
+  $("noAccess").classList.remove("hidden");
 }
 
-async function saveDoc(){
-  const title = document.getElementById("f-title").value.trim();
-  if(!title){ document.getElementById("f-title").focus(); return; }
-  const btn = document.getElementById("saveDoc");
-  btn.disabled = true; btn.textContent = "Guardando…";
-  const cat = document.getElementById("f-cat").value;
-  const nuevo = {
-    title, cat,
-    tags: document.getElementById("f-tags").value.split(",").map(t=>t.trim()).filter(Boolean),
-    desc: document.getElementById("f-desc").value.trim(),
-    createdAt: serverTimestamp(),
-  };
-  if(cat === "proveedores"){
-    nuevo.contact = document.getElementById("f-contact").value.trim();
-    nuevo.phone = document.getElementById("f-phone").value.trim();
-    nuevo.dias = [...document.querySelectorAll("#daysPicker .day.on")].map(b=>b.dataset.d);
+/* ==================== FIRESTORE (en vivo + caché local) ==================== */
+function subscribeDocs(user){
+  if(unsub) unsub();
+  $("grid").innerHTML = `<div class="loading">Cargando…</div>`;
+  const q = query(collection(db, COL), orderBy("createdAt", "desc"));
+  unsub = onSnapshot(q, { includeMetadataChanges:true }, snap => {
+    DOCS = snap.docs.map(d => ({ id:d.id, ...d.data({ serverTimestamps:"estimate" }), _pend:d.metadata.hasPendingWrites }));
+    setOffline(!navigator.onLine);
+    render();
+  }, err => {
+    if(err.code === "permission-denied"){ showNoAccess(user); return; }
+    $("grid").innerHTML = `<div class="empty"><div class="mark">!</div><h3>No se pudieron cargar</h3><p>Revisa tu conexión y vuelve a intentarlo.</p></div>`;
+  });
+}
+function setOffline(on){ $("offline").classList.toggle("hidden", !on); }
+window.addEventListener("online",  ()=>setOffline(false));
+window.addEventListener("offline", ()=>setOffline(true));
+
+/* ==================== ARCHIVOS ==================== */
+function guessType(name){
+  const ext = (name.split(".").pop()||"").toLowerCase();
+  return ({pdf:"application/pdf",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",gif:"image/gif",heic:"image/heic",heif:"image/heif"})[ext] || "";
+}
+async function prepararArchivo(file){
+  const type = file.type || guessType(file.name);
+  if(!type) throw new AvisoUsuario("Solo se pueden subir PDF o imágenes.");
+  let f = file.type ? file : new File([file], file.name, { type });
+  // Reducir fotos grandes (las del móvil suelen pesar 3-6 MB)
+  if(/^image\/(jpeg|png|webp)$/.test(type) && f.size > 1.5*1024*1024){
+    try{
+      const bmp = await createImageBitmap(f);
+      const s = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width*s); c.height = Math.round(bmp.height*s);
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height);
+      ctx.drawImage(bmp, 0, 0, c.width, c.height);
+      if(bmp.close) bmp.close();
+      const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+      if(blob && blob.size < f.size) f = new File([blob], f.name.replace(/\.[^.]+$/,"") + ".jpg", { type:"image/jpeg" });
+    }catch(_){ /* si no se puede reducir, se sube tal cual */ }
   }
+  if(f.size > MAX_MB*1024*1024) throw new AvisoUsuario(`El archivo pesa ${(f.size/1048576).toFixed(1)} MB. El máximo es ${MAX_MB} MB.`);
+  return f;
+}
+function subir(path, file, onPct){
+  return new Promise((resolve, reject) => {
+    const task = uploadBytesResumable(storageRef(storage, path), file, { contentType: file.type });
+    task.on("state_changed",
+      s => onPct(s.totalBytes ? Math.round(s.bytesTransferred / s.totalBytes * 100) : 0),
+      reject, resolve);
+  });
+}
+const borrarArchivo = path => path ? deleteObject(storageRef(storage, path)).catch(()=>{}) : Promise.resolve();
+const isPdf = d => (d.fileType||"").includes("pdf") || /\.pdf$/i.test(d.fileName||"");
+const isImg = d => (d.fileType||"").startsWith("image");
+
+/* ==================== GUARDAR (crear y editar) ==================== */
+async function saveDoc(){
+  const title = $("f-title").value.trim();
+  if(!title){ $("f-title").focus(); return; }
+  const btn = $("saveDoc");
+  btn.disabled = true; btn.textContent = "Guardando…";
+
+  const old = editingId ? DOCS.find(x => x.id === editingId) : null;
+  const cat = $("f-cat").value;
+  const isProv = cat === "proveedores";
+  const data = {
+    title, cat,
+    centro: $("f-centro").value,
+    tags: $("f-tags").value.split(",").map(t=>t.trim()).filter(Boolean),
+    desc: $("f-desc").value.trim(),
+  };
+  const PROV = { contact:"f-contact", phone:"f-phone", email:"f-email", horaLimite:"f-limite", minimo:"f-minimo" };
+  for(const [k,id] of Object.entries(PROV)){
+    if(isProv) data[k] = $(id).value.trim();
+    else if(old && k in old) data[k] = deleteField();
+  }
+  if(isProv) data.dias = [...document.querySelectorAll("#daysPicker .day.on")].map(b=>b.dataset.d);
+  else if(old && "dias" in old) data.dias = deleteField();
+
+  const file = $("f-file").files[0];
+  let subido = null;
   try{
-    const file = document.getElementById("f-file").files[0];
     if(file){
-      btn.textContent = "Subiendo archivo…";
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      const path = `archivos/${Date.now()}_${safe}`;
-      const sref = storageRef(storage, path);
-      await uploadBytes(sref, file);
-      nuevo.fileUrl = await getDownloadURL(sref);
-      nuevo.filePath = path;
-      nuevo.fileName = file.name;
-      nuevo.fileType = file.type;
-      btn.textContent = "Guardando…";
+      if(!navigator.onLine) throw new AvisoUsuario("Sin conexión no se pueden subir archivos. Guarda la ficha sin archivo o espera a tener red.");
+      btn.textContent = "Preparando…";
+      const f = await prepararArchivo(file);
+      const path = `archivos/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
+      await subir(path, f, pct => { btn.textContent = `Subiendo… ${pct}%`; });
+      subido = path;
+      Object.assign(data, { filePath:path, fileName:f.name, fileType:f.type, fileSize:f.size });
+      if(old && old.fileUrl) data.fileUrl = deleteField();
+      if(old && old.link) data.link = deleteField();
+    }else if(old && quitarArchivo){
+      for(const k of ["filePath","fileName","fileType","fileSize","fileUrl","link"]) if(k in old) data[k] = deleteField();
     }
-    await addDoc(collection(db, COL), nuevo);
-    hide("addOverlay");
-    activeCat="todas"; query_=""; document.getElementById("search").value="";
-    await loadDocs();
-  }catch(e){ alert("No se pudo guardar. Revisa tu conexión e inténtalo de nuevo."); }
-  finally{ btn.disabled=false; btn.textContent="Guardar"; }
+
+    btn.textContent = "Guardando…";
+    let write;
+    if(old){ data.updatedAt = serverTimestamp(); write = updateDoc(doc(db, COL, old.id), data); }
+    else   { data.createdAt = serverTimestamp(); write = addDoc(collection(db, COL), data); }
+    write.catch(()=>{});
+    // Si en 8 s no hay respuesta del servidor, queda guardado en el móvil y se sube solo al volver la red.
+    const res = await Promise.race([ write.then(()=>"ok"), sleep(8000).then(()=>"cola") ]);
+
+    if(old && old.filePath && (subido || quitarArchivo) && res === "ok") borrarArchivo(old.filePath);
+    closeOverlay("addOverlay");
+    if(!old){ activeCat = "todas"; query_ = ""; $("search").value = ""; render(); }
+    toast(res === "cola" ? "Guardado en el dispositivo. Se sincronizará al volver la conexión."
+                         : (old ? "Cambios guardados" : "Ficha guardada"));
+  }catch(e){
+    if(subido) borrarArchivo(subido);   // no dejar archivos huérfanos
+    alert(e instanceof AvisoUsuario ? e.message : "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.");
+  }finally{
+    btn.disabled = false; btn.textContent = "Guardar";
+  }
 }
 
 async function removeDoc(id){
-  if(!confirm("¿Eliminar esta ficha de la biblioteca? Se borrará también su archivo subido.")) return;
-  const d = DOCS.find(x=>x.id===id);
+  const d = DOCS.find(x=>x.id===id); if(!d) return;
+  if(d.filePath && !navigator.onLine){ alert("Necesitas conexión para eliminar una ficha que tiene archivo."); return; }
+  if(!confirm(`¿Eliminar «${d.title}»?${d.filePath ? " Se borrará también su archivo." : ""}`)) return;
   try{
-    if(d && d.filePath){
-      try{ await deleteObject(storageRef(storage, d.filePath)); }catch(_){}
-    }
-    await deleteDoc(doc(db, COL, id));
-    hide("viewOverlay");
-    await loadDocs();
+    const write = deleteDoc(doc(db, COL, id));
+    write.catch(()=>{});
+    const res = await Promise.race([ write.then(()=>"ok"), sleep(8000).then(()=>"cola") ]);
+    if(res === "ok") await borrarArchivo(d.filePath);
+    closeOverlay("viewOverlay");
+    toast("Ficha eliminada");
   }catch(e){ alert("No se pudo eliminar. Inténtalo de nuevo."); }
 }
 
@@ -430,9 +633,38 @@ function parseDriveId(url){
   for(const p of patterns){ const m = url.match(p); if(m) return m[1]; }
   return null;
 }
-function escapeHtml(s){return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+const norm = s => String(s??"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+function waNumber(phone){
+  const digits = String(phone||"").replace(/\D/g,"");
+  if(/^[67]\d{8}$/.test(digits)) return "34"+digits;                 // móvil español
+  if(/^34[67]\d{8}$/.test(digits)) return digits;
+  if(/^\+/.test(String(phone).trim()) && digits.length>=10) return digits;
+  if(/^00\d{10,}$/.test(digits)) return digits.slice(2);
+  return null;
+}
+let toastTimer = null;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 3200);
+}
 
-/* ==================== VISOR PDF (PDF.js) ==================== */
+function centroVisible(d){
+  if(activeCentro === "todos") return true;
+  const c = centroDe(d);
+  return c === activeCentro || c === AMBOS;
+}
+function matchesQuery(d, q){
+  if(!q) return true;
+  const hay = [d.title, d.desc, d.contact, d.phone, d.email, d.fileName, catById(d.cat).name, ...(d.tags||[])].map(norm).join(" | ");
+  return q.split(/\s+/).every(w => hay.includes(w));
+}
+function currentList(){
+  const q = norm(query_.trim());
+  return DOCS.filter(d => centroVisible(d) && (activeCat==="todas" || d.cat===activeCat) && matchesQuery(d, q));
+}
+
+/* ==================== VISOR PDF (renderizado por páginas visibles) ==================== */
 const PDFJS_VER = "6.1.200";
 let pdfjsLib = null;
 async function ensurePdfjs(){
@@ -441,60 +673,145 @@ async function ensurePdfjs(){
   pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VER}/pdf.worker.min.mjs`;
   return pdfjsLib;
 }
-async function renderPdf(url, container){
-  if(!container) return;
+
+// Estado del visor abierto, para poder liberar memoria al cerrarlo.
+let VS = null;
+function cleanupViewer(){
+  if(!VS) return;
+  try{ VS.io && VS.io.disconnect(); }catch(_){}
+  try{ VS.ioc && VS.ioc.disconnect(); }catch(_){}
+  try{ VS.loadingTask && VS.loadingTask.destroy(); }catch(_){}
+  VS.urls.forEach(u => URL.revokeObjectURL(u));
+  VS = null;
+}
+
+async function renderPdf(src, container, my){
   container.innerHTML = `<div class="pdf-loading">Cargando documento…</div>`;
   try{
     const lib = await ensurePdfjs();
-    const pdf = await lib.getDocument({ url }).promise;
-    container.innerHTML = "";
-    const cw = Math.max((container.clientWidth || 700) - 28, 200);
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    for(let n=1; n<=pdf.numPages; n++){
-      const page = await pdf.getPage(n);
-      const base = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: (cw / base.width) * dpr });
-      const canvas = document.createElement("canvas");
-      canvas.className = "pdf-page";
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      container.appendChild(canvas);
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    if(VS !== my) return;
+    my.loadingTask = lib.getDocument({ url: src });
+    const pdf = await my.loadingTask.promise;
+    if(VS !== my) return;
+    my.pdf = pdf;
+    const n = pdf.numPages;
+    const first = await pdf.getPage(1);
+    const vp1 = first.getViewport({ scale:1 });
+    if(VS !== my) return;
+
+    container.innerHTML = `<div class="pdf-counter" id="pdfCounter">1 / ${n}</div>`;
+    const slots = [];
+    for(let i=1; i<=n; i++){
+      const s = document.createElement("div");
+      s.className = "pdf-slot"; s.dataset.n = i;
+      s.style.aspectRatio = `${vp1.width} / ${vp1.height}`;
+      s.innerHTML = `<div class="pn">${i}</div>`;
+      container.appendChild(s); slots.push(s);
     }
+
+    const tasks = new Map();
+    const draw = async slot => {
+      if(slot.dataset.state) return;
+      const token = String(Math.random());
+      slot.dataset.state = token;
+      try{
+        const page = await pdf.getPage(+slot.dataset.n);
+        if(slot.dataset.state !== token || VS !== my) return;
+        const base = page.getViewport({ scale:1 });
+        slot.style.aspectRatio = `${base.width} / ${base.height}`;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const viewport = page.getViewport({ scale: (Math.max(slot.clientWidth,200) / base.width) * dpr });
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.floor(viewport.width); canvas.height = Math.floor(viewport.height);
+        const t = page.render({ canvasContext: canvas.getContext("2d"), viewport });
+        tasks.set(slot, t);
+        await t.promise;
+        tasks.delete(slot);
+        if(slot.dataset.state !== token) return;
+        slot.innerHTML = ""; slot.appendChild(canvas);
+      }catch(_){ if(slot.dataset.state === token) delete slot.dataset.state; }
+    };
+    const release = slot => {
+      if(!slot.dataset.state) return;
+      const t = tasks.get(slot); if(t){ try{ t.cancel(); }catch(_){} tasks.delete(slot); }
+      const cv = slot.querySelector("canvas"); if(cv){ cv.width = 0; cv.height = 0; }
+      slot.innerHTML = `<div class="pn">${slot.dataset.n}</div>`;
+      delete slot.dataset.state;
+    };
+
+    // Dibuja solo las páginas cercanas a la vista y libera las lejanas.
+    my.io = new IntersectionObserver(entries => {
+      for(const e of entries) e.isIntersecting ? draw(e.target) : release(e.target);
+    }, { root:container, rootMargin:"1200px 0px" });
+    const visibles = new Set();
+    my.ioc = new IntersectionObserver(entries => {
+      for(const e of entries) e.isIntersecting ? visibles.add(+e.target.dataset.n) : visibles.delete(+e.target.dataset.n);
+      if(visibles.size){ const c = $("pdfCounter"); if(c) c.textContent = `${Math.min(...visibles)} / ${n}`; }
+    }, { root:container, threshold:0.35 });
+    slots.forEach(s => { my.io.observe(s); my.ioc.observe(s); });
+    my.ready = true;
+    const pb = document.querySelector('[data-act="print-file"]'); if(pb) pb.disabled = false;
   }catch(e){
+    if(VS !== my) return;
     container.innerHTML = `<div class="pdf-error"><p>No se pudo mostrar el documento aquí.</p>
-      <button class="btn-openpdf" data-open="${escapeHtml(url)}">Abrir con el visor del móvil</button></div>`;
-    const b = container.querySelector("[data-open]");
-    if(b) b.addEventListener("click", e => window.open(e.currentTarget.dataset.open, "_blank", "noopener"));
+      <button class="btn-openpdf" data-act="open-out">Abrir fuera de la app</button></div>`;
+    container.querySelector('[data-act="open-out"]').addEventListener("click", ()=>abrirFuera());
   }
 }
-function currentList(){
-  const q = query_.trim().toLowerCase();
-  let list = DOCS.filter(d => activeCat==="todas" || d.cat===activeCat);
-  if(q){
-    list = list.filter(d =>
-      (d.title||"").toLowerCase().includes(q) || (d.desc||"").toLowerCase().includes(q) ||
-      (d.contact||"").toLowerCase().includes(q) || (d.tags||[]).some(t => t.toLowerCase().includes(q)));
+
+// Descarga el archivo con la sesión iniciada (sin enlaces públicos permanentes).
+async function obtenerArchivo(d, my){
+  if(d.filePath){
+    const r = storageRef(storage, d.filePath);
+    try{
+      const blob = await getBlob(r);
+      const url = URL.createObjectURL(blob);
+      if(VS !== my){ URL.revokeObjectURL(url); return null; }
+      my.urls.push(url);
+      return url;
+    }catch(_){
+      // Si el bucket aún no tiene CORS configurado, se usa un enlace temporal generado ahora.
+      return await getDownloadURL(r);
+    }
   }
-  return list;
+  return d.fileUrl || null;   // fichas muy antiguas
+}
+
+async function abrirFuera(){
+  const d = VS && DOCS.find(x=>x.id===VS.docId); if(!d) return;
+  try{
+    const url = d.filePath ? await getDownloadURL(storageRef(storage, d.filePath)) : (d.fileUrl || d.link);
+    if(url) window.open(url, "_blank", "noopener");
+  }catch(_){ alert("No se pudo abrir el archivo. Revisa la conexión."); }
+}
+function descargar(){
+  const d = VS && DOCS.find(x=>x.id===VS.docId); if(!d || !VS.url) return;
+  const a = document.createElement("a");
+  a.href = VS.url; a.download = d.fileName || "documento"; a.target = "_blank"; a.rel = "noopener";
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
 /* ==================== IMPRESIÓN ==================== */
 function printHeadHtml(subtitulo){
   const fecha = new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
+  const titulo = activeCentro==="todos" ? "Biblioteca · Cocina" : `Biblioteca · ${centroName(activeCentro)}`;
   return `<div class="p-head">
     <div class="p-hanko">蔵</div>
-    <div><div class="p-title">Biblioteca · Hotel Guadiana</div>
+    <div><div class="p-title">${escapeHtml(titulo)}</div>
     <div class="p-meta">${subtitulo} · ${fecha}</div></div>
   </div>`;
 }
 function itemHtml(d){
+  const centro = `<b>Centro:</b> ${escapeHtml(centroName(centroDe(d)))}`;
   if(d.cat === "proveedores"){
-    const dias = (d.dias||[]).join(", ");
     const linea = [
       d.contact?`<b>Contacto:</b> ${escapeHtml(d.contact)}`:"",
       d.phone?`<b>Tel:</b> ${escapeHtml(d.phone)}`:"",
-      dias?`<b>Reparto:</b> ${dias}`:"",
+      d.email?`<b>Email:</b> ${escapeHtml(d.email)}`:"",
+      (d.dias||[]).length?`<b>Reparto:</b> ${d.dias.join(", ")}`:"",
+      d.horaLimite?`<b>Pedir antes de:</b> ${escapeHtml(d.horaLimite)}`:"",
+      d.minimo?`<b>Mínimo:</b> ${escapeHtml(d.minimo)}`:"",
+      activeCentro==="todos" ? centro : "",
     ].filter(Boolean).join(" &nbsp;·&nbsp; ");
     return `<div class="p-item"><div class="n">${escapeHtml(d.title)}</div>
       <div class="d">${linea || "—"}${d.desc?`<br>${escapeHtml(d.desc)}`:""}</div></div>`;
@@ -502,10 +819,11 @@ function itemHtml(d){
   const extra = [
     d.desc?escapeHtml(d.desc):"",
     (d.tags&&d.tags.length)?`<b>Etiquetas:</b> ${d.tags.map(escapeHtml).join(", ")}`:"",
-    d.link?`<b>Enlace:</b> ${escapeHtml(d.link)}`:"",
+    activeCentro==="todos" ? centro : "",
   ].filter(Boolean).join(" &nbsp;·&nbsp; ");
   return `<div class="p-item"><div class="n">${escapeHtml(d.title)}</div>${extra?`<div class="d">${extra}</div>`:""}</div>`;
 }
+const PFOOT = `<div class="p-foot">Biblioteca privada · documento de uso interno</div>`;
 function printList(){
   const list = currentList();
   if(list.length===0){ alert("No hay nada que imprimir con este filtro."); return; }
@@ -518,63 +836,135 @@ function printList(){
     if(!items.length) continue;
     body += `<div class="p-section"><div class="p-cat">${c.name} (${items.length})</div>${items.map(itemHtml).join("")}</div>`;
   }
-  document.getElementById("printArea").innerHTML =
-    printHeadHtml(sub) + body + `<div class="p-foot">Biblioteca privada · Hotel Guadiana · documento de uso interno</div>`;
+  $("printArea").innerHTML = printHeadHtml(sub) + body + PFOOT;
   window.print();
 }
 function printOne(id){
   const d = DOCS.find(x=>x.id===id); if(!d) return;
-  document.getElementById("printArea").innerHTML =
-    printHeadHtml(catById(d.cat).name) +
-    `<div class="p-section">${itemHtml(d)}</div>` +
-    `<div class="p-foot">Biblioteca privada · Hotel Guadiana · documento de uso interno</div>`;
+  $("printArea").innerHTML = printHeadHtml(catById(d.cat).name) + `<div class="p-section">${itemHtml(d)}</div>` + PFOOT;
   window.print();
+}
+// Imprime el archivo (todas las páginas del PDF, o la imagen).
+async function printFile(){
+  const d = VS && DOCS.find(x=>x.id===VS.docId); if(!d) return;
+  const my = VS;
+  const area = $("printArea");
+  if(isImg(d) && VS.url){
+    area.innerHTML = `<div class="p-page"><img src="${VS.url}" alt=""></div>`;
+    const img = area.querySelector("img");
+    await new Promise(r => { if(img.complete) r(); else { img.onload = r; img.onerror = r; } });
+    window.print(); return;
+  }
+  if(!my.pdf){ toast("Espera a que termine de cargar el documento"); return; }
+  const n = my.pdf.numPages;
+  if(n > 60 && !confirm(`El documento tiene ${n} páginas. ¿Imprimirlo entero?`)) return;
+  const btn = document.querySelector('[data-act="print-file"]');
+  if(btn) btn.disabled = true;
+  try{
+    area.innerHTML = "";
+    const cv = document.createElement("canvas");
+    for(let i=1; i<=n; i++){
+      if(VS !== my) return;
+      toast(`Preparando impresión… ${i} / ${n}`);
+      const page = await my.pdf.getPage(i);
+      const vp = page.getViewport({ scale:1.6 });
+      cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
+      await page.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
+      const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", 0.9));
+      const url = URL.createObjectURL(blob); my.urls.push(url);
+      const div = document.createElement("div"); div.className = "p-page";
+      div.innerHTML = `<img src="${url}" alt="">`;
+      area.appendChild(div);
+      page.cleanup();
+    }
+    cv.width = 0; cv.height = 0;
+    await Promise.all([...area.querySelectorAll("img")].map(img => img.decode().catch(()=>{})));
+    $("toast").classList.remove("show");
+    window.print();
+  }finally{ if(btn) btn.disabled = false; }
 }
 
 /* ==================== RENDER ==================== */
+function renderCentros(){
+  const el = $("centros");
+  const opts = [{id:"todos", short:"Todos"}, ...CENTROS];
+  el.innerHTML = opts.map(c => `<button class="centro ${activeCentro===c.id?'active':''}" role="tab" aria-selected="${activeCentro===c.id}" data-centro="${c.id}">${escapeHtml(c.short)}</button>`).join("");
+  el.querySelectorAll(".centro").forEach(b => b.addEventListener("click", () => {
+    activeCentro = b.dataset.centro; store.set("bib.centro", activeCentro); render();
+  }));
+}
 function renderFilters(){
-  const el = document.getElementById("filters");
+  const el = $("filters");
+  const base = DOCS.filter(centroVisible);
   const all = [{id:"todas",name:"Todas"}, ...CATS];
-  el.innerHTML = all.map(c => `<button class="chip ${activeCat===c.id?'active':''}" data-cat="${c.id}">${c.name}</button>`).join("");
+  el.innerHTML = all.map(c => {
+    const n = c.id==="todas" ? base.length : base.filter(d=>d.cat===c.id).length;
+    return `<button class="chip ${activeCat===c.id?'active':''}" data-cat="${c.id}">${c.name}${n?`<span class="n">${n}</span>`:""}</button>`;
+  }).join("");
   el.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { activeCat = b.dataset.cat; render(); }));
 }
 
+const ICO = {
+  user:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>`,
+  phone:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.4c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg>`,
+  mail:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`,
+  shop:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V7l6-4 6 4v14M10 21v-4h4v4"/></svg>`,
+  cal:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3v4M8 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>`,
+  clock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  euro:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 7a6 6 0 1 0 0 10M4 10h10M4 14h10"/></svg>`,
+  pin:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
+  open:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M10 14 21 3M21 14v7H3V3h7"/></svg>`,
+  print:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>`,
+  down:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg>`,
+  edit:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
+};
+
 function render(){
-  const grid = document.getElementById("grid");
+  $("centroLabel").textContent = activeCentro==="todos" ? "Todos los centros" : centroName(activeCentro);
+  renderCentros();
+  renderFilters();
+  const grid = $("grid");
   const list = currentList();
   const q = query_.trim();
-  document.getElementById("count").innerHTML =
+  $("count").innerHTML =
     `<b>${list.length}</b> ${list.length===1?"ficha":"fichas"}` +
     (activeCat!=="todas" ? ` en ${catById(activeCat).name}` : "") + (q ? ` · “${escapeHtml(q)}”` : "");
-  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.cat===activeCat));
 
   if(list.length===0){
+    const vacia = DOCS.filter(centroVisible).length===0;
     grid.innerHTML = `<div class="empty">
       <div class="mark">空</div>
-      <h3>${DOCS.length===0 ? "Tu biblioteca está vacía" : "Nada por aquí"}</h3>
-      <p>${DOCS.length===0 ? "Añade tu primera ficha y empieza a organizarlo todo." : "Prueba con otra categoría o búsqueda."}</p>
+      <h3>${vacia ? "Aún no hay nada aquí" : "Nada por aquí"}</h3>
+      <p>${vacia ? "Añade la primera ficha y empieza a organizarlo todo." : "Prueba con otra categoría o búsqueda."}</p>
       <button class="btn-add" id="emptyAdd"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Añadir</button>
     </div>`;
-    const ea = document.getElementById("emptyAdd"); if(ea) ea.addEventListener("click", openAdd);
+    $("emptyAdd").addEventListener("click", ()=>openForm());
     return;
   }
 
+  const anim = firstPaint; firstPaint = false;
   grid.innerHTML = list.map((d,i) => {
     const c = catById(d.cat);
     const isProv = d.cat === "proveedores";
+    const badges = [
+      activeCentro==="todos" ? `<span class="badge">${escapeHtml(centroShort(centroDe(d)))}</span>` : "",
+      isProv && (d.dias||[]).includes(HOY) ? `<span class="badge hoy">Reparte hoy</span>` : "",
+      d._pend ? `<span class="badge pend">Sin sincronizar</span>` : "",
+    ].join("");
     let middle;
     if(isProv && (d.contact || d.phone)){
       middle = `<div class="contact-line">
-        ${d.contact?`<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>${escapeHtml(d.contact)}</span>`:""}
-        ${d.phone?`<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.4c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg>${escapeHtml(d.phone)}</span>`:""}
+        ${d.contact?`<span>${ICO.user}${escapeHtml(d.contact)}</span>`:""}
+        ${d.phone?`<span>${ICO.phone}${escapeHtml(d.phone)}</span>`:""}
       </div>`;
     } else { middle = d.desc ? `<p>${escapeHtml(d.desc)}</p>` : ""; }
-    return `<article class="doc" tabindex="0" data-id="${d.id}" style="--cat:${c.color};animation-delay:${i*40}ms">
-      <span class="kind">${c.name}</span>
+    const tieneArchivo = d.filePath || d.fileUrl || d.link;
+    return `<article class="doc${anim?" anim":""}" tabindex="0" data-id="${d.id}" style="--cat:${c.color};${anim?`animation-delay:${Math.min(i,15)*40}ms`:""}">
+      <div class="krow"><span class="kind">${c.name}</span>${badges}</div>
       <h3>${escapeHtml(d.title)}</h3>
       ${middle}
       <div class="tags">${(d.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>
-      <div class="open-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M10 14 21 3M21 14v7H3V3h7"/></svg>${isProv?"Ver ficha":"Abrir documento"}</div>
+      <div class="open-hint">${ICO.open}${isProv||!tieneArchivo?"Ver ficha":"Abrir documento"}</div>
     </article>`;
   }).join("");
 
@@ -586,124 +976,173 @@ function render(){
 }
 
 /* ==================== VISOR / FICHA ==================== */
-const printIco = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>`;
-
 function openViewer(id){
   const d = DOCS.find(x => x.id===id); if(!d) return;
-  document.getElementById("viewTitle").textContent = d.title;
-  const content = document.getElementById("viewerContent");
-  const delBtn = `<button class="btn-del" data-del="${d.id}">Eliminar</button>`;
-  const driveId = parseDriveId(d.link);
-  let pdfToRender = null;
-  const media = () => {
-    if(d.fileUrl){
-      if((d.fileType||"").startsWith("image")) return `<div class="imgwrap"><img src="${escapeHtml(d.fileUrl)}" alt=""></div>`;
-      pdfToRender = d.fileUrl;
-      return `<div class="pdf-scroll" id="pdfScroll"></div>`;
-    }
-    if(driveId) return `<iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>`;
-    return "";
-  };
-  const fileActions = () => {
-    if(d.fileUrl) return `<button class="btn-vprint" data-open="${escapeHtml(d.fileUrl)}">${printIco} Imprimir</button>
-      <a href="${escapeHtml(d.fileUrl)}" target="_blank" rel="noopener">Abrir / descargar ↗</a>`;
-    if(d.link) return `<button class="btn-vprint" data-open="${escapeHtml(d.link)}">${printIco} Imprimir PDF</button>
-      <a href="${escapeHtml(d.link)}" target="_blank" rel="noopener">Abrir en Drive ↗</a>`;
-    return "";
-  };
-  const hasMedia = d.fileUrl || driveId;
+  cleanupViewer();
+  const my = VS = { docId:id, urls:[], url:null, pdf:null };
+  $("viewTitle").textContent = d.title;
+  const content = $("viewerContent");
+  const hasFile = !!(d.filePath || d.fileUrl);
+  const driveId = !hasFile ? parseDriveId(d.link) : null;
+
+  const media = hasFile ? `<div id="mediaBox"><div class="media-loading">Cargando archivo…</div></div>`
+              : driveId ? `<iframe class="viewer-frame" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay"></iframe>`
+              : "";
+  const fileBtns = hasFile ? `
+      <button class="btn-vprint web-only" data-act="print-file" ${isImg(d)?"":"disabled"}>${ICO.print} Imprimir</button>
+      <button class="btn-vprint web-only" data-act="download">${ICO.down} Descargar</button>
+      <button class="btn-vprint native-only" data-act="open-out">${ICO.open} Abrir fuera</button>`
+    : d.link ? `<a class="btn-vprint" href="${escapeHtml(d.link)}" target="_blank" rel="noopener">${ICO.open} Abrir en Drive</a>` : "";
+  const meta = (extra) => `<div class="viewer-meta">
+      <div class="left"><button class="btn-del" data-act="del">Eliminar</button><button class="btn-vprint" data-act="edit">${ICO.edit} Editar</button></div>
+      <div class="actions">${extra}${fileBtns}</div></div>`;
 
   if(d.cat === "proveedores"){
     const telHref = (d.phone||"").replace(/[^+\d]/g,"");
+    const wa = waNumber(d.phone);
     const diasSet = new Set(d.dias||[]);
-    const diasHtml = DIAS.map(x=>`<div class="pday ${diasSet.has(x)?'on':''}">${x}</div>`).join("");
+    const diasHtml = DIAS.map(x=>`<div class="pday ${diasSet.has(x)?'on':''} ${x===HOY?'today':''}" title="${x===HOY?'Hoy':''}">${x}</div>`).join("");
+    const row = (ico, lbl, val) => `<div class="prow"><div class="ico">${ico}</div><div><div class="lbl">${lbl}</div>${val}</div></div>`;
+    const v = (txt, html) => txt ? `<div class="val">${html ?? escapeHtml(txt)}</div>` : `<div class="val muted">—</div>`;
     content.innerHTML = `
       <div class="pfiche">
-        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V7l6-4 6 4v14M10 21v-4h4v4"/></svg></div>
-          <div><div class="lbl">Proveedor</div><div class="val">${escapeHtml(d.title)}</div></div></div>
-        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg></div>
-          <div><div class="lbl">Persona de contacto</div><div class="val ${d.contact?'':'muted'}">${d.contact?escapeHtml(d.contact):"—"}</div></div></div>
-        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.4c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg></div>
-          <div><div class="lbl">Teléfono</div><div class="val ${d.phone?'':'muted'}">${d.phone?`<a href="tel:${telHref}">${escapeHtml(d.phone)}</a>`:"—"}</div></div></div>
-        <div class="prow"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3v4M8 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg></div>
-          <div><div class="lbl">Días de reparto</div><div class="pdays">${diasHtml}</div></div></div>
+        ${row(ICO.shop, "Proveedor", v(d.title))}
+        ${row(ICO.user, "Persona de contacto", v(d.contact))}
+        ${row(ICO.phone, "Teléfono", v(d.phone, `<a href="tel:${telHref}">${escapeHtml(d.phone)}</a>${wa?`<a class="wa" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}`))}
+        ${d.email ? row(ICO.mail, "Correo para pedidos", v(d.email, `<a href="mailto:${escapeHtml(d.email)}">${escapeHtml(d.email)}</a>`)) : ""}
+        ${row(ICO.cal, "Días de reparto", `<div class="pdays">${diasHtml}</div>`)}
+        ${d.horaLimite ? row(ICO.clock, "Hora límite de pedido", v(d.horaLimite)) : ""}
+        ${d.minimo ? row(ICO.euro, "Pedido mínimo", v(d.minimo)) : ""}
+        ${row(ICO.pin, "Centro", v(centroName(centroDe(d))))}
       </div>
       ${d.desc?`<div class="pnotes">${escapeHtml(d.desc)}</div>`:""}
-      ${media()}
-      <div class="viewer-meta">${delBtn}<div class="actions">
-        <button class="btn-vprint" data-print="${d.id}">${printIco} Imprimir ficha</button>
-        ${fileActions()}
-      </div></div>`;
+      ${media}
+      ${meta(`<button class="btn-vprint web-only" data-act="print-one">${ICO.print} Imprimir ficha</button>`)}`;
+  }else if(hasFile || driveId){
+    content.innerHTML = media +
+      (d.desc ? `<div class="vinfo">${escapeHtml(d.desc)}</div>` : "") +
+      meta("");
+  }else{
+    content.innerHTML = `
+      <div class="viewer-fallback"><p>Esta ficha <b>no tiene archivo</b> todavía.</p><p style="margin-top:8px">Pulsa <b>Editar</b> para adjuntarle uno.</p></div>
+      ${d.desc ? `<div class="vinfo">${escapeHtml(d.desc)}</div>` : ""}
+      ${meta(`<button class="btn-vprint web-only" data-act="print-one">${ICO.print} Imprimir ficha</button>`)}`;
   }
-  else{
-    if(hasMedia){
-      content.innerHTML = media() +
-        `<div class="viewer-meta">${delBtn}<div class="actions">${fileActions()}</div></div>`;
-    }else{
-      content.innerHTML = `
-        <div class="viewer-fallback"><p>Este documento <b>no tiene archivo</b> todavía.</p><p style="margin-top:8px">Puedes eliminarlo y volver a añadirlo adjuntando el archivo.</p></div>
-        <div class="viewer-meta">${delBtn}<div class="actions"><button class="btn-vprint" data-print="${d.id}">${printIco} Imprimir ficha</button></div></div>`;
-    }
-  }
-  content.querySelector("[data-del]").addEventListener("click", e => removeDoc(e.currentTarget.dataset.del));
-  const pB = content.querySelector("[data-print]"); if(pB) pB.addEventListener("click", e => printOne(e.currentTarget.dataset.print));
-  const oB = content.querySelectorAll("[data-open]"); oB.forEach(b => b.addEventListener("click", e => window.open(e.currentTarget.dataset.open, "_blank", "noopener")));
-  if(pdfToRender) renderPdf(pdfToRender, document.getElementById("pdfScroll"));
+
+  const on = (act, fn) => content.querySelectorAll(`[data-act="${act}"]`).forEach(b => b.addEventListener("click", fn));
+  on("del", () => removeDoc(d.id));
+  on("edit", () => { closeOverlay("viewOverlay"); openForm(d.id); });
+  on("print-one", () => printOne(d.id));
+  on("print-file", () => printFile());
+  on("download", () => descargar());
+  on("open-out", () => abrirFuera());
   show("viewOverlay");
+
+  if(hasFile){
+    const box = $("mediaBox");
+    obtenerArchivo(d, my).then(url => {
+      if(VS !== my) return;
+      if(!url){ box.innerHTML = `<div class="pdf-error"><p>No se encontró el archivo.</p></div>`; return; }
+      my.url = url;
+      if(isImg(d)){
+        box.innerHTML = `<div class="imgwrap"><img src="${escapeHtml(url)}" alt=""></div>`;
+      }else{
+        box.innerHTML = `<div class="pdf-scroll" id="pdfScroll"></div>`;
+        renderPdf(url, $("pdfScroll"), my);
+      }
+    }).catch(() => {
+      if(VS !== my) return;
+      box.innerHTML = `<div class="pdf-error"><p>No se pudo descargar el archivo. Revisa la conexión.</p></div>`;
+    });
+  }
 }
 
-/* ==================== AÑADIR ==================== */
+/* ==================== FORMULARIO (añadir / editar) ==================== */
 function buildDaysPicker(){
-  const el = document.getElementById("daysPicker");
+  const el = $("daysPicker");
   el.innerHTML = DIAS.map(x=>`<button type="button" class="day" data-d="${x}">${x}</button>`).join("");
   el.querySelectorAll(".day").forEach(b=>b.addEventListener("click", ()=>b.classList.toggle("on")));
 }
 function syncForm(){
-  const cat = document.getElementById("f-cat").value;
-  const isProv = cat === "proveedores";
-  document.getElementById("provFields").classList.toggle("hidden", !isProv);
-  document.getElementById("f-title-label").textContent = isProv ? "Nombre del proveedor" : "Título";
-  document.getElementById("f-title").placeholder = isProv ? "Ej. Pescadería del Sur" : "Ej. Plan APPCC 2026";
-  document.getElementById("f-file-label").innerHTML = isProv ? 'Catálogo o tarifa <span>(PDF o imagen, opcional)</span>' : 'Archivo <span>(PDF o imagen, opcional)</span>';
-  document.getElementById("f-desc-label").innerHTML = isProv ? 'Notas <span>(opcional)</span>' : 'Descripción <span>(opcional)</span>';
-  document.getElementById("f-desc").placeholder = isProv ? "Ej. Pedido mínimo, condiciones de pago…" : "Una línea para reconocerlo";
+  const isProv = $("f-cat").value === "proveedores";
+  $("provFields").classList.toggle("hidden", !isProv);
+  $("f-title-label").textContent = isProv ? "Nombre del proveedor" : "Título";
+  $("f-title").placeholder = isProv ? "Ej. Pescadería del Sur" : "Ej. Plan APPCC 2026";
+  $("f-file-label").innerHTML = isProv ? 'Catálogo o tarifa <span>(PDF o imagen, opcional)</span>' : 'Archivo <span>(PDF o imagen, opcional)</span>';
+  $("f-desc-label").innerHTML = isProv ? 'Notas <span>(opcional)</span>' : 'Descripción <span>(opcional)</span>';
+  $("f-desc").placeholder = isProv ? "Ej. Condiciones de pago, cómo hacer el pedido…" : "Una línea para reconocerlo";
 }
-function openAdd(){
-  const sel = document.getElementById("f-cat");
-  sel.innerHTML = CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
-  if(activeCat!=="todas") sel.value = activeCat;
-  ["f-title","f-tags","f-desc","f-contact","f-phone","f-file"].forEach(i=>{const e=document.getElementById(i);if(e)e.value="";});
+function syncFileUi(){
+  const f = $("f-file").files[0];
+  const fb = $("filebtn"), txt = $("filebtn-text");
+  const old = editingId ? DOCS.find(x=>x.id===editingId) : null;
+  const tieneArchivo = old && (old.filePath || old.fileUrl || old.link);
+  const cf = $("curfile");
+  cf.classList.toggle("hidden", !tieneArchivo || !!f);
+  if(tieneArchivo){
+    $("curfileName").textContent = "📎 " + (old.fileName || (old.link ? "Enlace de Drive" : "Archivo adjunto"));
+    cf.classList.toggle("removed", quitarArchivo);
+    $("curfileBtn").textContent = quitarArchivo ? "Deshacer" : "Quitar";
+  }
+  if(f){ fb.classList.add("chosen"); txt.textContent = f.name; }
+  else { fb.classList.remove("chosen"); txt.textContent = tieneArchivo ? "Reemplazar por otro archivo" : "Elegir archivo del dispositivo"; }
+}
+function openForm(id=null){
+  const d = id ? DOCS.find(x=>x.id===id) : null;
+  editingId = d ? d.id : null;
+  quitarArchivo = false;
+  $("addTitle").textContent = d ? "Editar ficha" : "Añadir";
+  $("f-cat").innerHTML = CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+  $("f-centro").innerHTML = [...CENTROS.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`), `<option value="${AMBOS}">Ambos centros</option>`].join("");
+  ["f-title","f-tags","f-desc","f-contact","f-phone","f-email","f-limite","f-minimo","f-file"].forEach(i=>{ $(i).value=""; });
   document.querySelectorAll("#daysPicker .day.on").forEach(b=>b.classList.remove("on"));
-  const fb=document.getElementById("filebtn"); fb.classList.remove("chosen");
-  document.getElementById("filebtn-text").textContent="Elegir archivo del dispositivo";
-  syncForm();
+
+  if(d){
+    $("f-cat").value = d.cat; $("f-centro").value = centroDe(d);
+    $("f-title").value = d.title || ""; $("f-tags").value = (d.tags||[]).join(", "); $("f-desc").value = d.desc || "";
+    $("f-contact").value = d.contact || ""; $("f-phone").value = d.phone || ""; $("f-email").value = d.email || "";
+    $("f-limite").value = d.horaLimite || ""; $("f-minimo").value = d.minimo || "";
+    const dias = new Set(d.dias||[]);
+    document.querySelectorAll("#daysPicker .day").forEach(b=>b.classList.toggle("on", dias.has(b.dataset.d)));
+  }else{
+    if(activeCat!=="todas") $("f-cat").value = activeCat;
+    $("f-centro").value = activeCentro!=="todos" ? activeCentro : AMBOS;
+  }
+  syncForm(); syncFileUi();
   show("addOverlay");
-  setTimeout(()=>document.getElementById("f-title").focus(),50);
+  setTimeout(()=>$("f-title").focus(), 50);
 }
 
 /* ==================== OVERLAYS ==================== */
-function show(id){document.getElementById(id).classList.add("show");}
-function hide(id){document.getElementById(id).classList.remove("show");}
-document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>e.target.closest(".overlay").classList.remove("show")));
-document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click", e=>{ if(e.target===o) o.classList.remove("show"); }));
-document.addEventListener("keydown", e=>{ if(e.key==="Escape") document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("show")); });
-
-document.getElementById("openAdd").addEventListener("click", openAdd);
-document.getElementById("saveDoc").addEventListener("click", saveDoc);
-document.getElementById("printBtn").addEventListener("click", printList);
-document.getElementById("f-cat").addEventListener("change", syncForm);
-document.getElementById("search").addEventListener("input", e=>{ query_=e.target.value; render(); });
-document.getElementById("f-file").addEventListener("change", e=>{
-  const f = e.target.files[0];
-  const fb = document.getElementById("filebtn");
-  const txt = document.getElementById("filebtn-text");
-  if(f){ fb.classList.add("chosen"); txt.textContent = f.name; }
-  else { fb.classList.remove("chosen"); txt.textContent = "Elegir archivo del dispositivo"; }
+function show(id){ $(id).classList.add("show"); }
+function closeOverlay(id){
+  $(id).classList.remove("show");
+  if(id==="viewOverlay"){ cleanupViewer(); $("viewerContent").innerHTML = ""; }
+  if(id==="addOverlay"){ editingId = null; }
+}
+function closeAllOverlays(){ ["addOverlay","viewOverlay"].forEach(closeOverlay); }
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
+document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click", e=>{ if(e.target===o) closeOverlay(o.id); }));
+document.addEventListener("keydown", e=>{
+  if(e.key!=="Escape") return;
+  const open = [...document.querySelectorAll(".overlay.show")].pop();
+  if(open) closeOverlay(open.id);
 });
 
+$("openAdd").addEventListener("click", ()=>openForm());
+$("saveDoc").addEventListener("click", saveDoc);
+$("printBtn").addEventListener("click", printList);
+$("f-cat").addEventListener("change", syncForm);
+$("search").addEventListener("input", e=>{ query_=e.target.value; render(); });
+$("f-file").addEventListener("change", syncFileUi);
+$("curfileBtn").addEventListener("click", ()=>{ quitarArchivo = !quitarArchivo; syncFileUi(); });
+
 /* ==================== INIT ==================== */
-renderFilters();
 buildDaysPicker();
+renderCentros();
+if(!IS_NATIVE && "serviceWorker" in navigator && location.protocol === "https:"){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
 </script>
 </body>
 </html>

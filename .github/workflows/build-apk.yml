@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Preparar Java
         uses: actions/setup-java@v4
@@ -24,7 +25,42 @@ jobs:
           java-version: 21
 
       - name: Instalar dependencias
-        run: npm install
+        run: npm ci
+
+      # Una sola fuente: la app vive en public/ y se copia a www/ solo para el APK
+      - name: Copiar la web a www
+        run: |
+          rm -rf www
+          mkdir -p www
+          cp -r public/. www/
+          rm -f www/sw.js www/404.html
+
+      # Firma siempre con la misma clave, para que el APK nuevo se instale encima del anterior
+      - name: Preparar la clave de firma
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          mkdir -p ~/.android
+          if [ -n "$DEBUG_KEYSTORE_B64" ]; then
+            echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+            echo "Usando la clave guardada en los secrets."
+          else
+            keytool -genkeypair -v -keystore ~/.android/debug.keystore \
+              -storepass android -keypass android -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            mkdir -p clave
+            base64 -w0 ~/.android/debug.keystore > clave/DEBUG_KEYSTORE_B64.txt
+            echo "::warning::No hay clave guardada. Descarga el artefacto 'clave-de-firma' y pega su contenido en un secret llamado DEBUG_KEYSTORE_B64."
+          fi
+
+      - name: Subir la clave nueva (solo la primera vez)
+        if: ${{ hashFiles('clave/DEBUG_KEYSTORE_B64.txt') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: clave-de-firma
+          path: clave/DEBUG_KEYSTORE_B64.txt
+          retention-days: 7
 
       - name: Generar el proyecto Android
         run: npx cap add android

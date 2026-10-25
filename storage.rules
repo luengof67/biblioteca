@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Biblioteca · reglas de Storage
+// Misma lista de "permitidos" que Firestore. Solo PDF e imágenes, máximo 30 MB.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function permitido() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/permitidos/$(request.auth.uid));
+    }
+
+    match /archivos/{nombre} {
+      allow read, delete: if permitido();
+      allow create: if permitido()
+        && request.resource.size < 30 * 1024 * 1024
+        && (request.resource.contentType == 'application/pdf'
+            || request.resource.contentType.matches('image/.*'));
+      allow update: if false;
+    }
+
+    match /{todo=**} {
+      allow read, write: if false;
+    }
+  }
+}

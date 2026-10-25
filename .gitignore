@@ -69,3 +69,6 @@ node_modules/
 .dataconnect
 node_modules/
 android/
+
+# Se genera en GitHub Actions a partir de public/
+www/

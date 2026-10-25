@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Biblioteca · reglas de Firestore
+// Solo pueden entrar las cuentas que tengan un documento en la colección "permitidos"
+// cuyo ID sea su UID (lo creas a mano desde la consola de Firebase).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function permitido() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/permitidos/$(request.auth.uid));
+    }
+
+    function fichaValida(d) {
+      return d.title is string && d.title.size() > 0 && d.title.size() <= 200
+        && d.cat is string
+        && (!('centro' in d) || d.centro is string)
+        && (!('tags' in d) || d.tags is list)
+        && (!('filePath' in d) || d.filePath.matches('archivos/.*'));
+    }
+
+    // Lista de cuentas autorizadas: nadie la puede tocar desde la app.
+    match /permitidos/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /documentos/{id} {
+      allow read: if permitido();
+      allow create, update: if permitido() && fichaValida(request.resource.data);
+      allow delete: if permitido();
+    }
+
+    // Todo lo demás, cerrado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

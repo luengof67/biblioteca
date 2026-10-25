@@ -1,0 +1,13 @@
+[
+  {
+    "origin": [
+      "https://biblioteca-cocina.web.app",
+      "https://biblioteca-cocina.firebaseapp.com",
+      "https://localhost",
+      "http://localhost",
+      "http://localhost:5000"
+    ],
+    "method": ["GET"],
+    "maxAgeSeconds": 3600
+  }
+]
