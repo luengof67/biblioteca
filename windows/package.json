@@ -1,0 +1,42 @@
+{
+  "name": "biblioteca-windows",
+  "productName": "Biblioteca",
+  "version": "1.0.0",
+  "description": "Biblioteca de cocina",
+  "author": "luengof67",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.luengo.biblioteca",
+    "productName": "Biblioteca",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "offline.html", "icon.ico"],
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Biblioteca",
+      "artifactName": "Biblioteca-instalador.${ext}"
+    },
+    "portable": {
+      "artifactName": "Biblioteca-portable.${ext}"
+    }
+  }
+}

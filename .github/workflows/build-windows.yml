@@ -1,0 +1,44 @@
+name: Compilar Windows
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'windows/**'
+      - '.github/workflows/build-windows.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar el exe
+        run: npm run dist
+
+      - name: Subir el instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: biblioteca-windows-instalador
+          path: windows/dist/Biblioteca-instalador.exe
+
+      - name: Subir la version portable
+        uses: actions/upload-artifact@v4
+        with:
+          name: biblioteca-windows-portable
+          path: windows/dist/Biblioteca-portable.exe
