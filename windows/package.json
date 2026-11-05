@@ -1,7 +1,7 @@
 {
   "name": "biblioteca-windows",
   "productName": "Biblioteca",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Biblioteca de cocina",
   "author": "luengof67",
   "main": "main.js",
@@ -17,13 +17,30 @@
   "build": {
     "appId": "com.luengo.biblioteca",
     "productName": "Biblioteca",
-    "directories": { "output": "dist" },
-    "files": ["main.js", "offline.html", "icon.ico"],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "offline.html",
+      "icon.ico"
+    ],
     "win": {
       "icon": "icon.ico",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {

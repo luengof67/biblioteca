@@ -1,7 +1,8 @@
 // Biblioteca · app de escritorio para Windows
 // Abre la web publicada (biblioteca-cocina.web.app) en su propia ventana.
 // Así se actualiza sola con cada deploy y no hay que recompilar el .exe.
-const { app, BrowserWindow, shell, Menu } = require("electron");
+const { app, BrowserWindow, shell, Menu, ipcMain } = require("electron");
+const { pathToFileURL } = require("url");
 const path = require("path");
 const fs = require("fs");
 
@@ -46,7 +47,7 @@ function crearVentana() {
     backgroundColor: "#FAF8F3",
     autoHideMenuBar: true,
     show: false,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, spellcheck: true },
+    webPreferences: { contextIsolation: true, nodeIntegration: false, spellcheck: true, preload: path.join(__dirname, "preload.js") },
   });
   if (e.maximized) win.maximize();
   win.once("ready-to-show", () => win.show());
@@ -86,6 +87,25 @@ function crearVentana() {
   // Al abrir, la página se pide al servidor de nuevo para que cada deploy se vea sin más
   win.webContents.session.clearCache().finally(() => win.loadURL(APP_URL, { extraHeaders: "pragma: no-cache\n" }));
 }
+
+// Imprimir: Windows no enseña vista previa en apps de escritorio, así que se genera un PDF
+// de lo que se va a imprimir y se abre en una ventana; desde ahí se ve, se imprime o se guarda.
+ipcMain.handle("imprimir-pdf", async (ev) => {
+  const pdf = await ev.sender.printToPDF({ printBackground: false, pageSize: "A4", preferCSSPageSize: true });
+  const carpeta = path.join(app.getPath("temp"), "biblioteca-impresion");
+  fs.mkdirSync(carpeta, { recursive: true });
+  // Borrar PDFs de impresiones anteriores
+  for (const f of fs.readdirSync(carpeta)) { try { fs.unlinkSync(path.join(carpeta, f)); } catch {} }
+  const archivo = path.join(carpeta, `impresion-${Date.now()}.pdf`);
+  fs.writeFileSync(archivo, pdf);
+  const vista = new BrowserWindow({
+    width: 900, height: 1000, parent: win, title: "Vista previa · Biblioteca",
+    icon: path.join(__dirname, "icon.ico"), autoHideMenuBar: true, backgroundColor: "#525659",
+    webPreferences: { plugins: true, contextIsolation: true, nodeIntegration: false },
+  });
+  vista.loadURL(pathToFileURL(archivo).href);
+  return true;
+});
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);

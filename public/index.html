@@ -304,6 +304,7 @@
   #printArea{display:none}
   @media print{
     body::before{display:none}
+    html,body{background:#fff !important}
     .wrap, .auth, .overlay, .toast{display:none !important}
     #printArea{display:block !important;color:#000;font-family:"Zen Kaku Gothic New",system-ui,sans-serif;padding:0}
     .p-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #000;padding-bottom:14px;margin-bottom:8px}
@@ -1021,6 +1022,13 @@ function itemHtml(d){
   ].filter(Boolean).join(" &nbsp;·&nbsp; ");
   return `<div class="p-item"><div class="n">${escapeHtml(d.title)}</div>${extra?`<div class="d">${extra}</div>`:""}</div>`;
 }
+// En la app de escritorio se abre una vista previa en PDF; en el navegador, la impresión normal.
+function imprimir(){
+  if(window.escritorio && window.escritorio.imprimir){
+    toast("Preparando la vista previa…");
+    window.escritorio.imprimir().catch(() => window.print());
+  } else window.print();
+}
 const PFOOT = `<div class="p-foot">Biblioteca privada · documento de uso interno</div>`;
 function printList(){
   const list = currentList();
@@ -1036,12 +1044,12 @@ function printList(){
     body += `<div class="p-section"><div class="p-cat">${c.name} (${items.length})</div>${items.map(itemHtml).join("")}</div>`;
   }
   $("printArea").innerHTML = printHeadHtml(sub) + body + PFOOT;
-  window.print();
+  imprimir();
 }
 function printOne(id){
   const d = DOCS.find(x=>x.id===id); if(!d) return;
   $("printArea").innerHTML = printHeadHtml(catById(d.cat).name) + `<div class="p-section">${itemHtml(d)}</div>` + PFOOT;
-  window.print();
+  imprimir();
 }
 // Imprime el archivo (todas las páginas del PDF, o la imagen).
 async function printFile(){
@@ -1052,7 +1060,7 @@ async function printFile(){
     area.innerHTML = `<div class="p-page"><img src="${VS.url}" alt=""></div>`;
     const img = area.querySelector("img");
     await new Promise(r => { if(img.complete) r(); else { img.onload = r; img.onerror = r; } });
-    window.print(); return;
+    imprimir(); return;
   }
   if(!my.pdf){ toast("Espera a que termine de cargar el documento"); return; }
   const n = my.pdf.numPages;
@@ -1079,7 +1087,7 @@ async function printFile(){
     cv.width = 0; cv.height = 0;
     await Promise.all([...area.querySelectorAll("img")].map(img => img.decode().catch(()=>{})));
     $("toast").classList.remove("show");
-    window.print();
+    imprimir();
   }finally{ if(btn) btn.disabled = false; }
 }
 
@@ -1919,7 +1927,7 @@ function printReceta(id, f=1){
      </div>
      ${d.desc ? `<div class="pr-notes"><b>Notas:</b> ${escapeHtml(d.desc)}</div>` : ""}
      ${fu.url ? `<div class="pr-src">Fuente: ${escapeHtml(fu.sitio||"")} · ${escapeHtml(fu.url)}</div>` : ""}` + PFOOT;
-  window.print();
+  imprimir();
 }
 
 /* ==================== OVERLAYS ==================== */
