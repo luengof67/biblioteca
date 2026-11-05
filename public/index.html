@@ -1715,7 +1715,19 @@ function lineasDe(id){
     .map(s => /^#+\s*/.test(s) ? "## " + s.replace(/^#+\s*/,"") : s);
 }
 
+// Los títulos de las webs vienen pensados para Google: «Receta de X, para emocionarte en cada bocado | Web»
+function tituloLimpio(t){
+  let x = sinMarkdown(t).split(/\s+[|·–—]\s+|\s+-\s+(?=[A-ZÁÉÍÓÚ][^-]*$)/)[0].trim();
+  x = x.replace(/^(la\s+)?(mejor\s+)?receta\s+(f[aá]cil\s+|casera\s+|tradicional\s+|original\s+)?(de|del)\s+/i, m => /del\s+$/i.test(m) ? "" : "");
+  x = x.replace(/^c[oó]mo (hacer|preparar|cocinar)\s+(un[ao]?s?\s+|el\s+|la\s+|los\s+|las\s+)?/i, "")
+       .replace(/[:,]\s+(la|una|nuestra|mi)?\s*receta\b.*$/i, "");
+  const corto = x.replace(/[,:;.]?\s+(para|que|con la que|con el que|ideal para|perfect[ao]s? para|y sorprende|¡).*$/i, "").trim();
+  if(corto.length >= 12) x = corto;
+  x = x.replace(/[.!¡]+$/,"").trim();
+  return x ? x[0].toUpperCase() + x.slice(1) : t;
+}
 function mostrarRevision(rec, aviso=""){
+  if(rec.titulo) rec.titulo = tituloLimpio(rec.titulo);
   rellenarRevision(rec);
   const url = (rec.url||"").trim();
   const dup = url && DOCS.find(d => d.receta && d.receta.fuente && d.receta.fuente.url === url);
