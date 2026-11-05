@@ -1259,9 +1259,10 @@ function openViewer(id){
     content.innerHTML = recetaHtml(d) + media +
       meta(`<button class="btn-vprint web-only" data-act="print-rec">${ICO.print} Imprimir receta</button>`);
   }else if(hasFile || driveId){
+    const convertible = d.cat === "recetas" && hasFile && isPdf(d);
     content.innerHTML = media +
       (d.desc ? `<div class="vinfo">${escapeHtml(d.desc)}</div>` : "") +
-      meta("");
+      meta(convertible ? `<button class="btn-vprint" data-act="convertir" style="color:var(--shu);border-color:#e4c9c6">${ICO.edit} Pasar a ficha de receta</button>` : "");
   }else{
     content.innerHTML = `
       <div class="viewer-fallback"><p>Esta ficha <b>no tiene archivo</b> todavía.</p><p style="margin-top:8px">Pulsa <b>Editar</b> para adjuntarle uno.</p></div>
@@ -1274,6 +1275,7 @@ function openViewer(id){
   on("edit", () => { closeOverlay("viewOverlay"); openForm(d.id); });
   on("print-one", () => printOne(d.id));
   on("print-rec", () => printReceta(d.id, (VS && VS.factor) || 1));
+  on("convertir", e => convertirPdf(d, e.currentTarget));
   on("print-file", () => printFile());
   on("download", () => descargar());
   on("open-out", () => abrirFuera());
@@ -1634,14 +1636,20 @@ function impModo(m){
   setTimeout(()=>$(m==="url"?"i-url":"i-txt").focus(), 30);
 }
 
-function openImport(editId=null){
+function openImport(editId=null, prefill=null){
   IMP.editId = editId; IMP.fuente = {}; IMP.alg = new Set(); IMP.detectados = new Set();
   $("r-sub").innerHTML = SUBCATS.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("");
   $("r-centro").innerHTML = [...CENTROS.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`), `<option value="${AMBOS}">Ambos centros</option>`].join("");
   impEstado("", ""); impAviso("", "");
   $("i-lector").value = store.get("bib.lector","") || LECTOR_DEFECTO;
   $("impAjustesBox").classList.add("hidden");
-  if(editId){
+  if(editId && prefill){
+    const d = DOCS.find(x=>x.id===editId); if(!d) return;
+    $("impTitle").textContent = "Pasar a ficha de receta";
+    rellenarRevision(prefill.rec, prefill.extra);
+    impPaso(2);
+    impAviso(prefill.tipo || "warn", prefill.aviso || "");
+  }else if(editId){
     const d = DOCS.find(x=>x.id===editId); if(!d) return;
     $("impTitle").textContent = "Editar receta";
     const r = d.receta || {};
@@ -1838,6 +1846,87 @@ async function guardarReceta(){
     alert("No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.");
   }finally{
     btn.disabled = false; btn.textContent = "Guardar receta";
+  }
+}
+
+/* ==================== RECETAS: pasar un PDF antiguo a ficha ==================== */
+// Alérgenos escritos como etiquetas en fichas antiguas («Leche y lácteos», «Dióxido de azufre y sulfitos»…)
+const ALG_ETIQUETA = [
+  ["gluten",/gluten|trigo/],["crustaceos",/crustaceo/],["huevos",/huevo/],["pescado",/^pescados?$|pescado/],
+  ["cacahuetes",/cacahuete|mani\b/],["soja",/soja/],["lacteos",/lacteo|leche/],["cascara",/cascara|frutos secos/],
+  ["apio",/apio/],["mostaza",/mostaza/],["sesamo",/sesamo/],["sulfitos",/sulfito|azufre/],
+  ["altramuces",/altramu/],["moluscos",/molusco/],
+];
+function separarEtiquetas(tags){
+  const alg = new Set(), resto = [];
+  for(const t of tags||[]){
+    const n = norm(t);
+    const hit = ALG_ETIQUETA.filter(([,re]) => re.test(n));
+    if(hit.length) hit.forEach(([id]) => alg.add(id)); else resto.push(t);
+  }
+  return { alg:[...alg], resto };
+}
+async function textoDelPdf(d){
+  let pdf = VS && VS.docId === d.id && VS.pdf;
+  if(!pdf){
+    const lib = await ensurePdfjs();
+    const url = (VS && VS.docId === d.id && VS.url) || await getDownloadURL(storageRef(storage, d.filePath));
+    pdf = await lib.getDocument({ url }).promise;
+  }
+  let out = "";
+  for(let i = 1; i <= Math.min(pdf.numPages, 8); i++){
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    let lastY = null;
+    for(const it of tc.items){
+      if(!("str" in it)) continue;
+      const y = it.transform[5];
+      if(lastY !== null && Math.abs(y - lastY) > 2 && !out.endsWith("\n")) out += "\n";
+      out += it.str;
+      if(it.hasEOL) out += "\n";
+      lastY = y;
+    }
+    out += "\n";
+  }
+  return out.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+async function convertirPdf(d, btn){
+  const txtBtn = btn ? btn.innerHTML : "";
+  if(btn){ btn.disabled = true; btn.textContent = "Leyendo el PDF…"; }
+  try{
+    const texto = await textoDelPdf(d);
+    if(texto.replace(/\s/g,"").length < 40){
+      alert("Este PDF es una foto o un escaneo y no tiene texto que se pueda leer. Puedes usar «Importar receta → Pegando el texto» escribiendo la receta a mano.");
+      return;
+    }
+    let rec = null, aviso = "Leída del PDF. Repasa ingredientes y pasos antes de guardar: el PDF se queda adjunto a la ficha.", tipo = "warn";
+    if(LECTOR_IA === null) await comprobarLector();
+    if(LECTOR_IA){
+      try{ rec = (await llamarLector("/texto", { texto })).receta; aviso = "Ordenada con IA a partir del PDF. Repásala antes de guardar: el PDF se queda adjunto."; }
+      catch(_){ rec = null; }
+    }
+    if(!rec) rec = parsearTexto(texto, d.title);
+    if(!rec.ingredientes.length && !rec.pasos.length){
+      // No se distinguen apartados: todo el texto va a elaboración para repartirlo a mano
+      rec.pasos = texto.split("\n").map(s=>s.trim()).filter(Boolean);
+      aviso = "No se han distinguido ingredientes y pasos. Está todo el texto en «Elaboración»: mueve los ingredientes a su recuadro.";
+    }
+    const { alg, resto } = separarEtiquetas(d.tags);
+    rec.titulo = d.title;
+    rec.descripcion = d.desc || rec.descripcion || "";
+    rec.etiquetas = [...new Set([...resto, ...(rec.etiquetas||[])])];
+    const detectados = detectarAlergenos(rec.ingredientes || []);
+    closeOverlay("viewOverlay");
+    openImport(d.id, {
+      rec,
+      extra:{ sub: d.sub || rec.categoria || clasificar({ ...rec, titulo:d.title }), centro: centroDe(d),
+              alergenos: [...new Set([...alg, ...(rec.alergenos||[]), ...detectados])] },
+      aviso, tipo,
+    });
+  }catch(e){
+    alert(e instanceof AvisoUsuario ? e.message : "No se pudo leer el PDF. Revisa la conexión e inténtalo de nuevo.");
+  }finally{
+    if(btn && btn.isConnected){ btn.disabled = false; btn.innerHTML = txtBtn; }
   }
 }
 
