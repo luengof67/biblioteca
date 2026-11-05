@@ -1903,11 +1903,25 @@ function closeOverlay(id){
 }
 function closeAllOverlays(){ ["addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
-document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click", e=>{ if(e.target===o) closeOverlay(o.id); }));
+// Cerrar pinchando fuera solo si el clic EMPIEZA y TERMINA fuera del recuadro
+// (al seleccionar texto y soltar el ratón fuera no se cierra). Los formularios no se cierran pinchando fuera.
+const SIN_CIERRE_FUERA = ["addOverlay","impOverlay"];
+document.querySelectorAll(".overlay").forEach(o=>{
+  let desdeFondo = false;
+  o.addEventListener("mousedown", e=>{ desdeFondo = e.target===o; });
+  o.addEventListener("click", e=>{
+    if(e.target===o && desdeFondo && !SIN_CIERRE_FUERA.includes(o.id)) closeOverlay(o.id);
+    desdeFondo = false;
+  });
+});
+// Con la revisión de una receta abierta, Escape pregunta antes de descartar lo que has corregido
+function impSinGuardar(){ return !$("impPaso2").classList.contains("hidden"); }
 document.addEventListener("keydown", e=>{
   if(e.key!=="Escape") return;
   const open = [...document.querySelectorAll(".overlay.show")].pop();
-  if(open) closeOverlay(open.id);
+  if(!open) return;
+  if(open.id==="impOverlay" && impSinGuardar() && !confirm("¿Cerrar sin guardar la receta?")) return;
+  closeOverlay(open.id);
 });
 
 $("openAdd").addEventListener("click", ()=>openForm());
