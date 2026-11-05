@@ -1406,12 +1406,41 @@ const ALG_REGLAS = {
   altramuces:{ si:/\b(altramuz|altramuces|lupino|chochos)\b/ },
   moluscos:{ si:/\b(mejillones?|almejas?|berberechos?|navajas?|vieiras?|zamburinas?|calamar|calamares|sepia|choco|chocos|pulpo|chipirones?|puntillitas?|chopitos?|ostras?|caracoles?|bigaros?|chirlas?|coquinas?)\b/ },
 };
+// Productos preparados que esconden alérgenos (salsas, mezclas de especias…)
+const ALG_PRODUCTOS = [
+  [/\b(teriyaki|salsa de soja|shoyu)\b/, ["soja","gluten"]],
+  [/\b(tamari|miso)\b/, ["soja"]],
+  [/\b(hoisin)\b/, ["soja","gluten","sesamo"]],
+  [/\b(ponzu)\b/, ["soja","gluten","pescado"]],
+  [/\b(salsa de ostras)\b/, ["moluscos","soja","gluten"]],
+  [/\b(worcestershire|perrins|salsa inglesa)\b/, ["pescado","sulfitos","gluten"]],
+  [/\b(shichimi|togarashi|furikake|gomasio|za'?atar|dukkah)\b/, ["sesamo"]],
+  [/\b(ensalada de algas|wakame en ensalada|goma wakame|wakame aliñad[ao]|ensalada wakame)\b/, ["sesamo","soja"]],
+  [/\b(pesto)\b/, ["lacteos","cascara"]],
+  [/\b(nutella|crema de cacao)\b/, ["lacteos","cascara","soja"]],
+  [/\b(pan de hamburguesa|pan brioche|pan de molde|brioche)\b/, ["gluten","huevos","lacteos","sesamo"]],
+  [/\b(kimchi)\b/, ["pescado","crustaceos"]],
+  [/\b(curry rojo|curry verde|pasta de curry)\b/, ["crustaceos","pescado"]],
+  [/\b(mayonesa|alioli)\b/, ["huevos","mostaza"]],
+];
+// Quita las marcas de formato que traen algunas webs: **negrita**, *cursiva*, [texto](enlace)
+function sinMarkdown(t){
+  return String(t ?? "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1")
+    .replace(/(^|[\s(¡¿"«])\*([^*\s](?:[^*\n]*?[^*\s])?)\*(?=$|[\s).,;:!?"»])/g, "$1$2")
+    .replace(/(^|[\s(¡¿"«])_([^_\s](?:[^_\n]*?[^_\s])?)_(?=$|[\s).,;:!?"»])/g, "$1$2")
+    .replace(/\s{2,}/g, " ").trim();
+}
+const limpiaLinea = l => l.startsWith("## ") ? "## " + sinMarkdown(l.slice(3)) : sinMarkdown(l);
+
 function detectarAlergenos(ingredientes){
   const out = new Set();
   for(const linea of ingredientes){
     if(linea.startsWith("## ")) continue;
     const t = norm(linea);
     for(const [id, r] of Object.entries(ALG_REGLAS)) if(r.si.test(t) && !(r.no && r.no.test(t))) out.add(id);
+    for(const [re, ids] of ALG_PRODUCTOS) if(re.test(t)) ids.forEach(a => out.add(a));
   }
   return [...out];
 }
@@ -1624,9 +1653,9 @@ function openImport(editId=null){
 }
 
 function rellenarRevision(rec, extra={}){
-  const ing = (rec.ingredientes||[]).map(String);
-  const pasos = (rec.pasos||[]).map(String);
-  $("r-title").value = (rec.titulo||"").slice(0,200);
+  const ing = (rec.ingredientes||[]).map(String).map(limpiaLinea).filter(Boolean);
+  const pasos = (rec.pasos||[]).map(String).map(limpiaLinea).filter(Boolean);
+  $("r-title").value = sinMarkdown(rec.titulo||"").slice(0,200);
   $("r-sub").value = extra.sub || rec.categoria || clasificar(rec);
   $("r-centro").value = extra.centro || (activeCentro!=="todos" ? activeCentro : AMBOS);
   $("r-rac").value = rec.raciones || "";
@@ -1634,7 +1663,7 @@ function rellenarRevision(rec, extra={}){
   $("r-ing").value = ing.join("\n");
   $("r-pasos").value = pasos.join("\n");
   $("r-tags").value = [...new Set((rec.etiquetas||[]).map(t=>String(t).trim()).filter(Boolean))].slice(0,8).join(", ");
-  $("r-desc").value = rec.descripcion || "";
+  $("r-desc").value = sinMarkdown(rec.descripcion || "");
   $("r-img").value = rec.imagen || "";
   $("r-url").value = rec.url || "";
   IMP.fuente = { sitio: rec.sitio || "", autor: rec.autor || "" };
@@ -1794,7 +1823,7 @@ async function guardarReceta(){
 
 /* ==================== RECETAS: ficha (visor) e impresión ==================== */
 function ingHtml(r, f){
-  return (r.ingredientes||[]).map(l => {
+  return (r.ingredientes||[]).map(limpiaLinea).map(l => {
     if(l.startsWith("## ")) return `<li class="sub">${escapeHtml(l.slice(3))}</li>`;
     const [q, resto] = partirCantidad(l, f);
     return `<li>${q ? `<span class="q">${escapeHtml(q)}</span>` : ""}${escapeHtml(resto)}</li>`;
@@ -1810,7 +1839,7 @@ function recetaHtml(d){
   const alg = (r.alergenos||[]).length
     ? `<b>Alérgenos</b>${r.alergenos.map(a=>`<span class="a">${escapeHtml(algName(a))}</span>`).join("")}`
     : `<b>Alérgenos</b> Ninguno marcado`;
-  const pasos = (r.pasos||[]).map(l => l.startsWith("## ") ? `<li class="sub">${escapeHtml(l.slice(3))}</li>` : `<li>${escapeHtml(l)}</li>`).join("");
+  const pasos = (r.pasos||[]).map(limpiaLinea).map(l => l.startsWith("## ") ? `<li class="sub">${escapeHtml(l.slice(3))}</li>` : `<li>${escapeHtml(l)}</li>`).join("");
   const f = r.fuente || {};
   const fuente = f.url ? `<div class="rsrc">Fuente: <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener">${escapeHtml(f.sitio || f.url)}</a>${f.autor?` · ${escapeHtml(f.autor)}`:""}</div>` : "";
   return `
@@ -1869,13 +1898,13 @@ function printReceta(id, f=1){
     r.tiempoCoc ? `<b>Cocción:</b> ${escapeHtml(r.tiempoCoc)}` : "",
     r.tiempoTotal ? `<b>Total:</b> ${escapeHtml(r.tiempoTotal)}` : "",
   ].filter(Boolean).join(" &nbsp;·&nbsp; ");
-  const ing = (r.ingredientes||[]).map(l => {
+  const ing = (r.ingredientes||[]).map(limpiaLinea).map(l => {
     if(l.startsWith("## ")) return `<div class="pr-sub">${escapeHtml(l.slice(3))}</div>`;
     const [q, resto] = partirCantidad(l, f);
     return `<div>${q ? `<b>${escapeHtml(q)}</b>` : ""}${escapeHtml(resto)}</div>`;
   }).join("");
   let n = 0;
-  const pasos = (r.pasos||[]).map(l => l.startsWith("## ")
+  const pasos = (r.pasos||[]).map(limpiaLinea).map(l => l.startsWith("## ")
     ? `<div class="pr-sub">${escapeHtml(l.slice(3))}</div>`
     : `<div class="pr-step"><b>${++n}.</b><span>${escapeHtml(l)}</span></div>`).join("");
   const alg = (r.alergenos||[]).length ? r.alergenos.map(algName).join(", ") : "ninguno marcado";

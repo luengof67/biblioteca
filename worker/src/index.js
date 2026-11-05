@@ -402,6 +402,9 @@ function limpiar(s) {
   let t = String(s);
   if (/[<&]/.test(t)) t = decodificar(t.replace(/<[^>]+>/g, " "));
   if (/&[a-z#0-9]+;/i.test(t)) t = decodificar(t);   // doble codificación, frecuente en WordPress
+  t = t.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")                       // [texto](enlace)
+       .replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1")      // **negrita**
+       .replace(/(^|[\s(¡¿"«])\*([^*\s](?:[^*\n]*?[^*\s])?)\*(?=$|[\s).,;:!?"»])/g, "$1$2");  // *cursiva*
   return t.replace(/\s+/g, " ").trim();
 }
 function recortar(s, n) { return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : s; }
