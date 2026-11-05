@@ -72,14 +72,19 @@ function crearVentana() {
   win.webContents.on("before-input-event", (ev, i) => {
     if (i.type !== "keyDown") return;
     const k = i.key.toLowerCase();
-    if (k === "f5" || (i.control && k === "r")) { ev.preventDefault(); win.loadURL(APP_URL); }
+    if (k === "f5" || (i.control && k === "r")) {
+      // Recargar siempre la última versión publicada (sin usar la copia guardada)
+      ev.preventDefault();
+      win.webContents.session.clearCache().finally(() => win.loadURL(APP_URL, { extraHeaders: "pragma: no-cache\n" }));
+    }
     else if (i.control && i.shift && k === "i") { ev.preventDefault(); win.webContents.toggleDevTools(); }
     else if (i.control && (k === "+" || k === "=")) { ev.preventDefault(); win.webContents.setZoomLevel(win.webContents.getZoomLevel() + 0.5); }
     else if (i.control && k === "-") { ev.preventDefault(); win.webContents.setZoomLevel(win.webContents.getZoomLevel() - 0.5); }
     else if (i.control && k === "0") { ev.preventDefault(); win.webContents.setZoomLevel(0); }
   });
 
-  win.loadURL(APP_URL);
+  // Al abrir, la página se pide al servidor de nuevo para que cada deploy se vea sin más
+  win.webContents.session.clearCache().finally(() => win.loadURL(APP_URL, { extraHeaders: "pragma: no-cache\n" }));
 }
 
 app.whenReady().then(() => {
