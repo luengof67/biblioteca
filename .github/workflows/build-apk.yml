@@ -76,8 +76,21 @@ jobs:
       - name: Dar permisos a gradlew
         run: chmod +x android/gradlew
 
+      # Guarda Gradle entre compilaciones (no hay que descargarlo cada vez)
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Más margen para descargar Gradle y hasta 3 intentos si la red de GitHub falla
       - name: Compilar el APK
-        run: cd android && ./gradlew assembleDebug
+        run: |
+          sed -i 's/networkTimeout=[0-9]*/networkTimeout=120000/' android/gradle/wrapper/gradle-wrapper.properties
+          cd android
+          for i in 1 2 3; do
+            ./gradlew assembleDebug && exit 0
+            echo "::warning::Intento $i fallido, reintentando en 20 s…"
+            sleep 20
+          done
+          exit 1
 
       - name: Subir el APK
         uses: actions/upload-artifact@v4
