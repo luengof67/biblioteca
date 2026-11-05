@@ -1353,7 +1353,7 @@ function openForm(id=null){
 
 /* ==================== RECETAS: configuración ==================== */
 // Dirección del lector de recetas (worker de Cloudflare). Si la dejas vacía, se usa la de «Ajustes del lector».
-const LECTOR_DEFECTO = "";
+const LECTOR_DEFECTO = "https://biblioteca-recetas.luengof67.workers.dev";
 const lectorUrl = () => (store.get("bib.lector","") || LECTOR_DEFECTO).trim().replace(/\/+$/,"");
 
 // Tipos de receta. El "id" se guarda en cada ficha: no lo cambies. El "name" sí.
