@@ -1,7 +1,7 @@
 // Biblioteca · service worker
 // Guarda la app y las librerías para que abra aunque no haya conexión.
 // Los datos (Firestore) y los archivos (Storage) no pasan por aquí: Firestore ya tiene su propia caché.
-const CACHE = "biblioteca-v2";
+const CACHE = "biblioteca-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 const CDN = ["www.gstatic.com", "fonts.googleapis.com", "fonts.gstatic.com", "cdnjs.cloudflare.com"];
 

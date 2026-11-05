@@ -16,7 +16,13 @@ service cloud.firestore {
         && d.cat is string
         && (!('centro' in d) || d.centro is string)
         && (!('tags' in d) || d.tags is list)
-        && (!('filePath' in d) || d.filePath.matches('archivos/.*'));
+        && (!('filePath' in d) || d.filePath.matches('archivos/.*'))
+        // Recetas: tipo de receta y ficha con ingredientes y pasos
+        && (!('sub' in d) || (d.sub is string && d.sub.size() <= 40))
+        && (!('receta' in d) || (d.receta is map
+              && (!('ingredientes' in d.receta) || d.receta.ingredientes is list)
+              && (!('pasos' in d.receta) || d.receta.pasos is list)
+              && (!('alergenos' in d.receta) || d.receta.alergenos is list)));
     }
 
     // Lista de cuentas autorizadas: nadie la puede tocar desde la app.

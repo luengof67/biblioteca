@@ -1,0 +1,11 @@
+# Biblioteca · lector de recetas
+# Se publica solo desde GitHub Actions (.github/workflows/deploy-worker.yml) al cambiar algo en worker/.
+# La clave de la IA (opcional) se guarda como secreto en Cloudflare: ANTHROPIC_API_KEY.
+name = "biblioteca-recetas"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+
+[vars]
+# Modelo que usa el lector cuando la IA está activada. Puedes cambiarlo aquí.
+MODELO = "claude-haiku-5-5"

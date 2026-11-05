@@ -6,6 +6,8 @@ on:
     paths-ignore:
       - 'windows/**'
       - '.github/workflows/build-windows.yml'
+      - 'worker/**'
+      - '.github/workflows/deploy-worker.yml'
   workflow_dispatch:
 
 jobs:
