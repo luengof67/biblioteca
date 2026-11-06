@@ -207,6 +207,43 @@
   .pday.today{box-shadow:0 0 0 2px var(--kin)}
   .pnotes{padding:16px 26px;border-top:1px solid var(--line);font-size:14px;color:var(--sumi-soft);line-height:1.6;white-space:pre-line}
 
+  /* Apartados del proveedor (ficha) */
+  .psec{padding:18px 26px;border-top:1px solid var(--line)}
+  .psec h4{font-size:11.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--prov);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .psec h4 .n{font-size:11px;font-weight:700;letter-spacing:0;color:var(--sumi-soft);background:var(--washi-2);border-radius:100px;padding:1px 8px}
+  .psec .muted{font-size:13.5px;color:var(--sumi-soft)}
+  .ptable{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .ptable th{text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sumi-soft);padding:9px 12px;background:var(--washi-2)}
+  .ptable td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+  .ptable td.pr{font-weight:700;white-space:nowrap}
+  .ptable td.fe{font-size:12px;color:var(--sumi-soft);white-space:nowrap}
+  .pfilter{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;margin-bottom:10px;background:#fff}
+  .flist{display:flex;flex-direction:column;gap:7px}
+  .fitem{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:14px;cursor:pointer;text-align:left;font:inherit;color:var(--sumi);width:100%}
+  .fitem:hover{border-color:var(--prov)}
+  .fitem.sel{border-color:var(--prov);box-shadow:0 0 0 2px color-mix(in srgb, var(--prov) 25%, transparent)}
+  .fitem .ext{font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:3px 6px;border-radius:5px;background:var(--washi-2);color:var(--prov);flex:0 0 auto}
+  .fitem .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fitem .sz{font-size:12px;color:var(--sumi-soft);flex:0 0 auto}
+  #provMedia:empty{display:none}
+
+  /* Apartados del proveedor (formulario) */
+  .pform{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line)}
+  .pform .ph{font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--sumi-soft);margin-bottom:8px}
+  .pform .ph span{font-weight:500;letter-spacing:0;text-transform:none}
+  .prodrow{display:grid;grid-template-columns:1fr 110px 110px 34px;gap:6px;margin-bottom:6px}
+  .prodrow input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px;background:#fff;color:var(--sumi)}
+  .prodrow .x,.frow .x{width:34px;height:38px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;color:var(--sumi-soft);font:inherit;font-weight:700}
+  .prodhead{display:grid;grid-template-columns:1fr 110px 110px 34px;gap:6px;font-size:11px;color:var(--sumi-soft);margin-bottom:4px;padding-left:2px}
+  @media (max-width:520px){ .prodrow,.prodhead{grid-template-columns:1fr 84px 84px 34px} }
+  .btn-addrow{padding:9px 14px;border:1.5px dashed var(--line);background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:600;font-size:13.5px;color:var(--sumi-soft);width:100%}
+  .frow{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;font-size:13.5px}
+  .frow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .frow.nuevo .nm::before{content:"Nuevo · ";color:var(--prov);font-weight:700}
+  .frow.quitado .nm{text-decoration:line-through;color:var(--sumi-soft)}
+  .frow .x{height:30px;width:auto;padding:0 10px;font-size:12.5px}
+  .filebtn.small{padding:11px;font-size:13.5px}
+
   /* ==================== RECETAS ==================== */
   .btn-imp{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:13px 17px;border:1px solid #e4c9c6;border-radius:11px;cursor:pointer;background:#fff;color:var(--shu);font:inherit;font-weight:700;font-size:14px;transition:.16s}
   .btn-imp:hover{background:#fbf0ef;border-color:#d9b2ad}
@@ -442,11 +479,30 @@
           <div class="field"><label for="f-limite">Hora límite de pedido</label><input id="f-limite" type="text" placeholder="Ej. 12:00 del día anterior"></div>
           <div class="field"><label for="f-minimo">Pedido mínimo</label><input id="f-minimo" type="text" placeholder="Ej. 60 €"></div>
         </div>
+
+        <div class="field pform">
+          <div class="ph">Productos que se le compran</div>
+          <div class="prodhead"><span>Producto</span><span>Formato</span><span>Precio</span><span></span></div>
+          <div id="prodList"></div>
+          <button type="button" class="btn-addrow" id="prodAdd">+ Añadir producto</button>
+        </div>
+        <div class="field pform">
+          <div class="ph">Precios · tarifas <span>(PDF o foto)</span></div>
+          <div id="fl-precios"></div>
+          <input id="fi-precios" type="file" accept="application/pdf,image/*" multiple class="filein">
+          <label for="fi-precios" class="filebtn small"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>Añadir tarifas</label>
+        </div>
+        <div class="field pform">
+          <div class="ph">Catálogos <span>(PDF o foto)</span></div>
+          <div id="fl-catalogos"></div>
+          <input id="fi-catalogos" type="file" accept="application/pdf,image/*" multiple class="filein">
+          <label for="fi-catalogos" class="filebtn small"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>Añadir catálogos</label>
+        </div>
       </div>
 
       <div class="field"><label for="f-tags">Etiquetas <span>(por comas)</span></label><input id="f-tags" type="text" placeholder="pescado, temporada"></div>
       <div class="field"><label id="f-desc-label" for="f-desc">Descripción <span>(opcional)</span></label><textarea id="f-desc" placeholder="Una línea para reconocerlo"></textarea></div>
-      <div class="field">
+      <div class="field" id="fileField">
         <label id="f-file-label">Archivo <span>(PDF o imagen, opcional)</span></label>
         <div class="curfile hidden" id="curfile"><span class="nm" id="curfileName"></span><button type="button" id="curfileBtn">Quitar</button></div>
         <input id="f-file" type="file" accept="application/pdf,image/*" class="filein">
@@ -635,6 +691,12 @@ let unsub = null;
 let firstPaint = true;
 let editingId = null;
 let quitarArchivo = false;
+// Formulario de proveedor: productos y archivos por apartado.
+//  formProd: [{n, f, p, fecha, p0}]   (p0 = precio original, para saber si cambió)
+//  formArch: [{sec, path, name, type, size, at, file?, quitar?, legacy?}]
+let formProd = [];
+let formArch = [];
+const SECCIONES = { precios:"Precios · tarifas", catalogos:"Catálogos" };
 
 class AvisoUsuario extends Error {}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -773,10 +835,18 @@ async function saveDoc(){
 
   const old = editingId ? DOCS.find(x => x.id === editingId) : null;
   const data = { title, ...datosFormulario(old) };
+  const isProv = data.cat === "proveedores";
 
-  const file = files[0];
+  const file = isProv ? null : files[0];   // el archivo general no se usa en proveedores
   let subido = null;
+  const subidosProv = [];
+  let aBorrar = [];
   try{
+    if(isProv){
+      data.productos = productosDelFormulario();
+      data.archivos = await prepararArchivosProveedor(btn, subidosProv);
+      aBorrar = formArch.filter(a => a.quitar && a.path).map(a => a.path);
+    }
     if(file){
       if(!navigator.onLine) throw new AvisoUsuario("Sin conexión no se pueden subir archivos. Guarda la ficha sin archivo o espera a tener red.");
       btn.textContent = "Preparando…";
@@ -800,12 +870,14 @@ async function saveDoc(){
     const res = await Promise.race([ write.then(()=>"ok"), sleep(8000).then(()=>"cola") ]);
 
     if(old && old.filePath && (subido || quitarArchivo) && res === "ok") borrarArchivo(old.filePath);
+    if(res === "ok") aBorrar.forEach(borrarArchivo);
     closeOverlay("addOverlay");
     if(!old){ activeCat = "todas"; query_ = ""; $("search").value = ""; render(); }
     toast(res === "cola" ? "Guardado en el dispositivo. Se sincronizará al volver la conexión."
                          : (old ? "Cambios guardados" : "Ficha guardada"));
   }catch(e){
     if(subido) borrarArchivo(subido);   // no dejar archivos huérfanos
+    subidosProv.forEach(borrarArchivo);
     alert(e instanceof AvisoUsuario ? e.message : "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.");
   }finally{
     btn.disabled = false; btn.textContent = "Guardar";
@@ -865,13 +937,15 @@ async function saveMany(files){
 
 async function removeDoc(id){
   const d = DOCS.find(x=>x.id===id); if(!d) return;
-  if(d.filePath && !navigator.onLine){ alert("Necesitas conexión para eliminar una ficha que tiene archivo."); return; }
-  if(!confirm(`¿Eliminar «${d.title}»?${d.filePath ? " Se borrará también su archivo." : ""}`)) return;
+  const extras = (d.archivos||[]).map(a => a.path).filter(Boolean);
+  const nArch = (d.filePath ? 1 : 0) + extras.length;
+  if(nArch && !navigator.onLine){ alert("Necesitas conexión para eliminar una ficha que tiene archivos."); return; }
+  if(!confirm(`¿Eliminar «${d.title}»?${nArch === 1 ? " Se borrará también su archivo." : nArch > 1 ? ` Se borrarán también sus ${nArch} archivos.` : ""}`)) return;
   try{
     const write = deleteDoc(doc(db, COL, id));
     write.catch(()=>{});
     const res = await Promise.race([ write.then(()=>"ok"), sleep(8000).then(()=>"cola") ]);
-    if(res === "ok") await borrarArchivo(d.filePath);
+    if(res === "ok"){ await borrarArchivo(d.filePath); extras.forEach(borrarArchivo); }
     closeOverlay("viewOverlay");
     toast("Ficha eliminada");
   }catch(e){ alert("No se pudo eliminar. Inténtalo de nuevo."); }
@@ -908,7 +982,8 @@ function centroVisible(d){
 function matchesQuery(d, q){
   if(!q) return true;
   const hay = [d.title, d.desc, d.contact, d.phone, d.email, d.fileName, catById(d.cat).name, subName(d.sub), ...(d.tags||[]),
-               ...((d.receta && d.receta.ingredientes) || [])].map(norm).join(" | ");
+               ...((d.receta && d.receta.ingredientes) || []),
+               ...(d.productos||[]).map(p => p.n), ...(d.archivos||[]).map(a => a.name)].map(norm).join(" | ");
   return q.split(/\s+/).every(w => hay.includes(w));
 }
 function subVisible(d){
@@ -1034,14 +1109,14 @@ async function obtenerArchivo(d, my){
 }
 
 async function abrirFuera(){
-  const d = VS && DOCS.find(x=>x.id===VS.docId); if(!d) return;
+  const d = VS && (VS.file || DOCS.find(x=>x.id===VS.docId)); if(!d) return;
   try{
     const url = d.filePath ? await getDownloadURL(storageRef(storage, d.filePath)) : (d.fileUrl || d.link);
     if(url) window.open(url, "_blank", "noopener");
   }catch(_){ alert("No se pudo abrir el archivo. Revisa la conexión."); }
 }
 function descargar(){
-  const d = VS && DOCS.find(x=>x.id===VS.docId); if(!d || !VS.url) return;
+  const d = VS && (VS.file || DOCS.find(x=>x.id===VS.docId)); if(!d || !VS.url) return;
   const a = document.createElement("a");
   a.href = VS.url; a.download = d.fileName || "documento"; a.target = "_blank"; a.rel = "noopener";
   document.body.appendChild(a); a.click(); a.remove();
@@ -1069,8 +1144,9 @@ function itemHtml(d){
       d.minimo?`<b>Mínimo:</b> ${escapeHtml(d.minimo)}`:"",
       activeCentro==="todos" ? centro : "",
     ].filter(Boolean).join(" &nbsp;·&nbsp; ");
+    const prods = (d.productos||[]).map(p => `${escapeHtml(p.n)}${p.f?` (${escapeHtml(p.f)})`:""}${p.p?`: ${escapeHtml(p.p)}`:""}`).join("; ");
     return `<div class="p-item"><div class="n">${escapeHtml(d.title)}</div>
-      <div class="d">${linea || "—"}${d.desc?`<br>${escapeHtml(d.desc)}`:""}</div></div>`;
+      <div class="d">${linea || "—"}${prods?`<br><b>Productos:</b> ${prods}`:""}${d.desc?`<br>${escapeHtml(d.desc)}`:""}</div></div>`;
   }
   const r = d.receta;
   const extra = [
@@ -1114,7 +1190,7 @@ function printOne(id){
 }
 // Imprime el archivo (todas las páginas del PDF, o la imagen).
 async function printFile(){
-  const d = VS && DOCS.find(x=>x.id===VS.docId); if(!d) return;
+  const d = VS && (VS.file || DOCS.find(x=>x.id===VS.docId)); if(!d) return;
   const my = VS;
   const area = $("printArea");
   if(isImg(d) && VS.url){
@@ -1247,11 +1323,14 @@ function render(){
           ${tiempo?`<span>${ICO.clock}${escapeHtml(tiempo)}</span>`:""}
           ${r.raciones?`<span>${ICO.people}${escapeHtml(r.raciones)}</span>`:""}
         </div>${d.desc ? `<p>${escapeHtml(d.desc)}</p>` : ""}`;
-    } else if(isProv && (d.contact || d.phone)){
+    } else if(isProv){
+      const nProd = (d.productos||[]).length;
+      const nArch = (d.archivos||[]).length + ((d.filePath||d.fileUrl||d.link) ? 1 : 0);
       middle = `<div class="contact-line">
         ${d.contact?`<span>${ICO.user}${escapeHtml(d.contact)}</span>`:""}
         ${d.phone?`<span>${ICO.phone}${escapeHtml(d.phone)}</span>`:""}
-      </div>`;
+        ${nProd||nArch ? `<span>${ICO.list}${[nProd?`${nProd} producto${nProd===1?"":"s"}`:"", nArch?`${nArch} archivo${nArch===1?"":"s"}`:""].filter(Boolean).join(" · ")}</span>` : ""}
+      </div>${!d.contact && !d.phone && d.desc ? `<p>${escapeHtml(d.desc)}</p>` : ""}`;
     } else { middle = d.desc ? `<p>${escapeHtml(d.desc)}</p>` : ""; }
     const tieneArchivo = d.filePath || d.fileUrl || d.link;
     const kind = d.cat === "recetas" && subName(d.sub) ? `${c.name} · ${subName(d.sub)}` : c.name;
@@ -1314,8 +1393,18 @@ function openViewer(id){
         ${row(ICO.pin, "Centro", v(centroName(centroDe(d))))}
       </div>
       ${d.desc?`<div class="pnotes">${escapeHtml(d.desc)}</div>`:""}
-      ${media}
-      ${meta(`<button class="btn-vprint web-only" data-act="print-one">${ICO.print} Imprimir ficha</button>`)}`;
+      ${productosHtml(d)}
+      ${archivosHtml(d, "precios")}
+      ${archivosHtml(d, "catalogos")}
+      <div id="provMedia"></div>
+      <div class="viewer-meta">
+        <div class="left"><button class="btn-del" data-act="del">Eliminar</button><button class="btn-vprint" data-act="edit">${ICO.edit} Editar</button></div>
+        <div class="actions"><button class="btn-vprint web-only" data-act="print-one">${ICO.print} Imprimir ficha</button>
+          <span id="provFileBtns" class="hidden" style="display:contents">
+            <button class="btn-vprint web-only" data-act="print-file">${ICO.print} Imprimir archivo</button>
+            <button class="btn-vprint web-only" data-act="download">${ICO.down} Descargar</button>
+            <button class="btn-vprint native-only" data-act="open-out">${ICO.open} Abrir fuera</button>
+          </span></div></div>`;
   }else if(d.receta){
     content.innerHTML = recetaHtml(d) + media +
       meta(`<button class="btn-vprint web-only" data-act="print-rec">${ICO.print} Imprimir receta</button>`);
@@ -1341,9 +1430,10 @@ function openViewer(id){
   on("download", () => descargar());
   on("open-out", () => abrirFuera());
   if(d.receta) activarReceta(d, content);
+  if(d.cat === "proveedores") activarProveedor(d, content);
   show("viewOverlay");
 
-  if(hasFile){
+  if(hasFile && d.cat !== "proveedores"){
     const box = $("mediaBox");
     obtenerArchivo(d, my).then(url => {
       if(VS !== my) return;
@@ -1362,6 +1452,67 @@ function openViewer(id){
   }
 }
 
+/* ---- Apartados del proveedor en la ficha ---- */
+// Archivos del proveedor por apartado; el archivo único de fichas antiguas va en Catálogos.
+function archivosProveedor(d){
+  const lista = (d.archivos||[]).map(a => ({ sec:a.sec, name:a.name, size:a.size,
+    meta:{ filePath:a.path, fileName:a.name, fileType:a.type } }));
+  if(d.filePath || d.fileUrl || d.link) lista.unshift({ sec:"catalogos", name: d.fileName || (d.link ? "Enlace de Drive" : "Archivo"),
+    size:d.fileSize, meta:{ filePath:d.filePath, fileUrl:d.fileUrl, link:d.link, fileName:d.fileName, fileType:d.fileType } });
+  return lista;
+}
+const fechaCorta = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso||""); return m ? `${m[3]}/${m[2]}/${m[1].slice(2)}` : ""; };
+const tamano = b => !b ? "" : b < 1048576 ? `${Math.max(1,Math.round(b/1024))} KB` : `${(b/1048576).toFixed(1)} MB`;
+
+function productosHtml(d){
+  const ps = d.productos || [];
+  const filas = ps.map((p,i) => `<tr data-q="${escapeHtml(norm(p.n+" "+p.f))}">
+      <td>${escapeHtml(p.n)}</td><td>${escapeHtml(p.f||"")}</td>
+      <td class="pr">${escapeHtml(p.p||"—")}</td><td class="fe">${fechaCorta(p.fecha)}</td></tr>`).join("");
+  return `<div class="psec"><h4>Productos que se le compran ${ps.length?`<span class="n">${ps.length}</span>`:""}</h4>
+    ${!ps.length ? `<div class="muted">Aún no hay productos. Pulsa <b>Editar</b> para añadirlos.</div>` : `
+      ${ps.length > 8 ? `<input class="pfilter" id="prodFilter" placeholder="Buscar producto…">` : ""}
+      <table class="ptable"><thead><tr><th>Producto</th><th>Formato</th><th>Precio</th><th>Actualizado</th></tr></thead>
+      <tbody>${filas}</tbody></table>`}</div>`;
+}
+function archivosHtml(d, sec){
+  const items = archivosProveedor(d).map((a,i)=>({a,i})).filter(x => x.a.sec === sec);
+  const ext = n => ((n||"").split(".").pop()||"").toUpperCase().slice(0,4) || "DOC";
+  return `<div class="psec"><h4>${SECCIONES[sec]} ${items.length?`<span class="n">${items.length}</span>`:""}</h4>
+    ${!items.length ? `<div class="muted">Ninguno todavía.</div>` : `<div class="flist">${items.map(({a,i}) =>
+      `<button class="fitem" data-file="${i}"><span class="ext">${escapeHtml(ext(a.name))}</span><span class="nm">${escapeHtml(a.name)}</span><span class="sz">${tamano(a.size)}</span></button>`).join("")}</div>`}</div>`;
+}
+function activarProveedor(d, content){
+  const lista = archivosProveedor(d);
+  content.querySelectorAll(".fitem").forEach(b => b.addEventListener("click", () => verArchivoProveedor(d, lista[+b.dataset.file].meta, b)));
+  const pf = content.querySelector("#prodFilter");
+  if(pf) pf.addEventListener("input", () => {
+    const q = norm(pf.value.trim());
+    content.querySelectorAll(".ptable tbody tr").forEach(tr => tr.style.display = !q || tr.dataset.q.includes(q) ? "" : "none");
+  });
+}
+function verArchivoProveedor(d, meta, el){
+  if(!meta.filePath && !meta.fileUrl){ if(meta.link) window.open(meta.link, "_blank", "noopener"); return; }
+  cleanupViewer();
+  const my = VS = { docId:d.id, urls:[], url:null, pdf:null, file:meta };
+  $("viewerContent").querySelectorAll(".fitem").forEach(b => b.classList.toggle("sel", b === el));
+  $("provFileBtns").classList.remove("hidden");
+  const box = $("provMedia");
+  box.innerHTML = `<div id="mediaBox"><div class="media-loading">Cargando archivo…</div></div>`;
+  box.scrollIntoView({ behavior:"smooth", block:"start" });
+  const mb = $("mediaBox");
+  obtenerArchivo(meta, my).then(url => {
+    if(VS !== my) return;
+    if(!url){ mb.innerHTML = `<div class="pdf-error"><p>No se encontró el archivo.</p></div>`; return; }
+    my.url = url;
+    if(isImg(meta)) mb.innerHTML = `<div class="imgwrap"><img src="${escapeHtml(url)}" alt=""></div>`;
+    else { mb.innerHTML = `<div class="pdf-scroll" id="pdfScroll"></div>`; renderPdf(url, $("pdfScroll"), my); }
+  }).catch(() => {
+    if(VS !== my) return;
+    mb.innerHTML = `<div class="pdf-error"><p>No se pudo descargar el archivo. Revisa la conexión.</p></div>`;
+  });
+}
+
 /* ==================== FORMULARIO (añadir / editar) ==================== */
 function buildDaysPicker(){
   const el = $("daysPicker");
@@ -1372,6 +1523,7 @@ function syncForm(){
   const isProv = $("f-cat").value === "proveedores";
   $("subField").classList.toggle("hidden", $("f-cat").value !== "recetas");
   $("provFields").classList.toggle("hidden", !isProv);
+  $("fileField").classList.toggle("hidden", isProv);   // los proveedores usan sus apartados
   $("f-title-label").textContent = isProv ? "Nombre del proveedor" : "Título";
   $("f-title").placeholder = isProv ? "Ej. Pescadería del Sur" : "Ej. Plan APPCC 2026";
   $("f-file-label").innerHTML = isProv ? 'Catálogo o tarifa <span>(PDF o imagen, opcional)</span>' : 'Archivo <span>(PDF o imagen, opcional)</span>';
@@ -1401,6 +1553,72 @@ function syncFileUi(){
     ? `Máximo ${MAX_MB} MB. Las fotos grandes se reducen solas antes de subirlas.`
     : `Máximo ${MAX_MB} MB por archivo. Puedes elegir varios a la vez: se crea una ficha por cada uno.`;
 }
+/* ---- Apartados del proveedor en el formulario ---- */
+function renderProdForm(){
+  const el = $("prodList");
+  el.innerHTML = formProd.map((p,i) => `<div class="prodrow" data-i="${i}">
+      <input data-k="n" placeholder="Ej. Aceite de oliva virgen extra" value="${escapeHtml(p.n)}">
+      <input data-k="f" placeholder="Garrafa 5 L" value="${escapeHtml(p.f)}">
+      <input data-k="p" placeholder="Ej. 32,50 €" value="${escapeHtml(p.p)}">
+      <button type="button" class="x" title="Quitar producto">✕</button>
+    </div>`).join("");
+  el.querySelectorAll(".prodrow").forEach(row => {
+    const i = +row.dataset.i;
+    row.querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => { formProd[i][inp.dataset.k] = inp.value; }));
+    row.querySelector(".x").addEventListener("click", () => { formProd.splice(i,1); renderProdForm(); });
+  });
+}
+function renderArchForm(){
+  for(const sec of Object.keys(SECCIONES)){
+    const el = $("fl-"+sec);
+    const items = formArch.map((a,i)=>({a,i})).filter(x => x.a.sec === sec);
+    el.innerHTML = items.map(({a,i}) => `<div class="frow ${a.file?"nuevo":""} ${a.quitar?"quitado":""}" data-i="${i}">
+        <span class="nm">📎 ${escapeHtml(a.name)}</span>
+        <button type="button" class="x">${a.file ? "✕" : a.quitar ? "Deshacer" : "Quitar"}</button>
+      </div>`).join("");
+    el.querySelectorAll(".frow").forEach(row => row.querySelector(".x").addEventListener("click", () => {
+      const a = formArch[+row.dataset.i];
+      if(a.file) formArch.splice(+row.dataset.i, 1);          // nuevo sin subir: se descarta
+      else { a.quitar = !a.quitar; if(a.legacy) quitarArchivo = a.quitar; }
+      renderArchForm();
+    }));
+  }
+}
+function addArchivos(sec){
+  const inp = $("fi-"+sec);
+  for(const f of inp.files) formArch.push({ sec, file:f, name:f.name });
+  inp.value = "";
+  renderArchForm();
+}
+const hoyISO = () => new Date().toISOString().slice(0,10);
+
+/* Sube los archivos nuevos del proveedor y devuelve la lista final.
+   `subidos` se rellena según se suben, para poder borrarlos si algo falla. */
+async function prepararArchivosProveedor(btn, subidos){
+  const nuevos = formArch.filter(a => a.file);
+  if(nuevos.length && !navigator.onLine) throw new AvisoUsuario("Sin conexión no se pueden subir archivos. Quítalos o espera a tener red.");
+  const finales = formArch.filter(a => !a.file && !a.quitar && !a.legacy)
+    .map(({sec,path,name,type,size,at}) => ({sec,path,name,type,size,at}));
+  for(let i = 0; i < nuevos.length; i++){
+    const a = nuevos[i];
+    btn.textContent = `Preparando archivo ${i+1}/${nuevos.length}…`;
+    let f;
+    try{ f = await prepararArchivo(a.file); }
+    catch(e){ throw new AvisoUsuario(`«${a.name}»: ${e instanceof AvisoUsuario ? e.message : "no se pudo preparar"}`); }
+    const path = `archivos/${Date.now()}_${i}_${f.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
+    await subir(path, f, pct => { btn.textContent = `Subiendo archivo ${i+1}/${nuevos.length}… ${pct}%`; });
+    subidos.push(path);
+    finales.push({ sec:a.sec, path, name:f.name, type:f.type, size:f.size, at:hoyISO() });
+  }
+  return finales;
+}
+function productosDelFormulario(){
+  return formProd
+    .map(p => ({ n:p.n.trim(), f:p.f.trim(), p:p.p.trim(), fecha:p.fecha||"", p0:p.p0 }))
+    .filter(p => p.n)
+    .map(p => ({ n:p.n, f:p.f, p:p.p, fecha: p.p && p.p !== p.p0 ? hoyISO() : (p.p ? p.fecha : "") }));
+}
+
 function openForm(id=null){
   const d = id ? DOCS.find(x=>x.id===id) : null;
   if(d && d.receta){ openImport(d.id); return; }   // las recetas importadas se editan con su propio formulario
@@ -1408,6 +1626,11 @@ function openForm(id=null){
   editingId = d ? d.id : null;
   quitarArchivo = false;
   $("f-file").multiple = !d;   // varios archivos solo al crear
+  formProd = ((d && d.productos) || []).map(p => ({ n:p.n||"", f:p.f||"", p:p.p||"", fecha:p.fecha||"", p0:p.p||"" }));
+  formArch = ((d && d.archivos) || []).map(a => ({...a}));
+  if(d && d.cat === "proveedores" && (d.filePath || d.fileUrl || d.link))
+    formArch.unshift({ sec:"catalogos", legacy:true, name: d.fileName || (d.link ? "Enlace de Drive" : "Archivo adjunto") });
+  ["fi-precios","fi-catalogos"].forEach(i => { $(i).value = ""; });
   $("addTitle").textContent = d ? "Editar ficha" : "Añadir";
   $("f-cat").innerHTML = CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
   $("f-centro").innerHTML = [...CENTROS.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`), `<option value="${AMBOS}">Ambos centros</option>`].join("");
@@ -1426,7 +1649,7 @@ function openForm(id=null){
     $("f-sub").value = activeCat==="recetas" && SUBCATS.some(s=>s.id===activeSub) ? activeSub : "";
     $("f-centro").value = activeCentro!=="todos" ? activeCentro : AMBOS;
   }
-  syncForm(); syncFileUi();
+  syncForm(); syncFileUi(); renderProdForm(); renderArchForm();
   show("addOverlay");
   setTimeout(()=>$("f-title").focus(), 50);
 }
@@ -2155,6 +2378,12 @@ $("f-cat").addEventListener("change", syncForm);
 $("search").addEventListener("input", e=>{ query_=e.target.value; render(); });
 $("f-file").addEventListener("change", syncFileUi);
 $("curfileBtn").addEventListener("click", ()=>{ quitarArchivo = !quitarArchivo; syncFileUi(); });
+$("prodAdd").addEventListener("click", ()=>{
+  formProd.push({ n:"", f:"", p:"", fecha:"", p0:"" }); renderProdForm();
+  const rows = $("prodList").querySelectorAll(".prodrow"); rows[rows.length-1].querySelector("input").focus();
+});
+$("fi-precios").addEventListener("change", ()=>addArchivos("precios"));
+$("fi-catalogos").addEventListener("change", ()=>addArchivos("catalogos"));
 
 /* ==================== INIT ==================== */
 buildDaysPicker();
