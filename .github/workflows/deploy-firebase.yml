@@ -1,0 +1,51 @@
+name: Publicar web y reglas
+
+# Al hacer push a main con cambios en la web o en las reglas, publica en Firebase:
+#   - Hosting (public/)        -> https://biblioteca-cocina.web.app (lo que abre el .exe)
+#   - Reglas de Firestore      (firestore.rules)
+#   - Reglas de Storage        (storage.rules)
+# Necesita el secreto FIREBASE_SERVICE_ACCOUNT (la clave JSON de la cuenta de servicio).
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'public/**'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy-firebase.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-firebase
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Comprobar la clave de Firebase
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::error::Falta el secreto FIREBASE_SERVICE_ACCOUNT (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Iniciar sesión en Google Cloud con la cuenta de servicio
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Publicar en Firebase
+        run: npx --yes firebase-tools deploy --only hosting,firestore:rules,storage --project biblioteca-cocina --non-interactive
