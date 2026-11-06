@@ -89,6 +89,26 @@
   .chip.active{background:var(--sumi);border-color:var(--sumi);color:var(--washi);font-weight:700}
   .chip .n{opacity:.55;font-weight:500;margin-left:4px}
   .count{margin:16px 2px 22px;font-size:13px;color:var(--sumi-soft);letter-spacing:.3px}
+  /* Franja "Pedidos de hoy" */
+  .hoybar{margin:16px 0 0;background:#fff;border:1px solid var(--line);border-left:4px solid var(--prov);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .hoybar .hl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .hoybar .ht{font-size:11px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:var(--prov);min-width:150px}
+  .hoybar .hc{display:flex;gap:6px;flex-wrap:wrap}
+  .hoybar .hp{padding:5px 11px;border:1px solid var(--line);background:var(--washi);border-radius:100px;font:inherit;font-size:13px;font-weight:600;color:var(--sumi);cursor:pointer}
+  .hoybar .hp:hover{border-color:var(--prov)}
+  .hoybar .hp small{font-weight:500;color:var(--sumi-soft);margin-left:5px}
+  /* Pedido */
+  .ped-row{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dotted var(--line);font-size:14px}
+  .ped-row .sub{font-size:12px;color:var(--sumi-soft)}
+  .ped-row input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px;text-align:center;background:#fff}
+  .ped-row.on input{border-color:var(--prov);box-shadow:0 0 0 2px color-mix(in srgb, var(--prov) 18%, transparent)}
+  .ped-info{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .ped-info span{font-size:12.5px;padding:4px 10px;border-radius:100px;background:var(--washi-2);color:var(--sumi-soft)}
+  .ped-info span b{color:var(--sumi)}
+  #pedTexto{min-height:150px;font-size:14px;line-height:1.5}
+  .ped-acts{display:flex;gap:8px;flex-wrap:wrap}
+  .ped-acts .btn-save,.ped-acts .btn-ghost{flex:1;min-width:120px;text-align:center}
+  .btn-wa{background:#2F7A47 !important}
   .count b{color:var(--sumi);font-weight:700}
 
   /* ==================== TARJETAS ==================== */
@@ -453,6 +473,7 @@
 
   <div class="filters" id="filters"></div>
   <div class="subfilters hidden" id="subfilters"></div>
+  <div class="hoybar hidden" id="hoybar"></div>
   <div class="count" id="count"></div>
   <div class="grid" id="grid"></div>
 
@@ -621,6 +642,34 @@
   </div>
 </div>
 
+<!-- Modal: hacer pedido a un proveedor -->
+<div class="overlay" id="pedOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="pedTitle">
+    <div class="mhead">
+      <h2 id="pedTitle">Pedido</h2>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div class="ped-info" id="pedInfo"></div>
+      <div class="row2">
+        <div class="field"><label for="pedCentro">Para</label><select id="pedCentro"></select></div>
+        <div class="field"><label for="pedEntrega">Entrega</label><input id="pedEntrega" type="text" placeholder="Ej. jueves 12/11"></div>
+      </div>
+      <div class="field" id="pedProdField">
+        <label>Cantidades <span>(deja en blanco lo que no pidas)</span></label>
+        <div id="pedList"></div>
+      </div>
+      <div class="field"><label for="pedExtra">Otras cosas <span>(una por línea, opcional)</span></label><textarea id="pedExtra" placeholder="Ej. 2 kg de almejas"></textarea></div>
+      <div class="field"><label for="pedTexto">Mensaje <span>(puedes retocarlo)</span></label><textarea id="pedTexto"></textarea></div>
+    </div>
+    <div class="mfoot ped-acts">
+      <button class="btn-ghost" id="pedCopiar">Copiar</button>
+      <button class="btn-ghost" id="pedMail">Correo</button>
+      <button class="btn-save btn-wa" id="pedWa">WhatsApp</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: traer productos de ComparaPrecios -->
 <div class="overlay" id="cpOverlay">
   <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
@@ -706,7 +755,7 @@ const CATS = [
 // Centros. El "id" se guarda en cada ficha: no lo cambies. El "name" y el "short" sí puedes cambiarlos cuando quieras.
 const CENTROS = [
   {id:"guadiana", name:"Hotel Guadiana", short:"Guadiana"},
-  {id:"hotel2",   name:"Segundo hotel",  short:"Hotel 2"},
+  {id:"hotel2",   name:"Hotel Cumbria",  short:"Cumbria"},
 ];
 const AMBOS = "ambos";
 const CENTRO_FICHAS_ANTIGUAS = "guadiana";   // las fichas creadas antes de existir este campo
@@ -1331,6 +1380,7 @@ function render(){
   renderCentros();
   renderFilters();
   renderSubfilters();
+  renderHoy();
   const grid = $("grid");
   const list = currentList();
   const q = query_.trim();
@@ -1446,7 +1496,8 @@ function openViewer(id){
       <div id="provMedia"></div>
       <div class="viewer-meta">
         <div class="left"><button class="btn-del" data-act="del">Eliminar</button><button class="btn-vprint" data-act="edit">${ICO.edit} Editar</button></div>
-        <div class="actions"><button class="btn-vprint web-only" data-act="print-one">${ICO.print} Imprimir ficha</button>
+        <div class="actions"><button class="btn-vprint" data-act="pedido" style="color:var(--prov);border-color:var(--prov)">${ICO.list} Hacer pedido</button>
+          <button class="btn-vprint web-only" data-act="print-one">${ICO.print} Imprimir ficha</button>
           <span id="provFileBtns" class="hidden" style="display:contents">
             <button class="btn-vprint web-only" data-act="print-file">${ICO.print} Imprimir archivo</button>
             <button class="btn-vprint web-only" data-act="download">${ICO.down} Descargar</button>
@@ -1471,6 +1522,7 @@ function openViewer(id){
   on("del", () => removeDoc(d.id));
   on("edit", () => { closeOverlay("viewOverlay"); openForm(d.id); });
   on("print-one", () => printOne(d.id));
+  on("pedido", () => abrirPedido(d.id));
   on("print-rec", () => printReceta(d.id, (VS && VS.factor) || 1));
   on("convertir", e => convertirPdf(d, e.currentTarget));
   on("print-file", () => printFile());
@@ -1600,6 +1652,101 @@ function syncFileUi(){
     ? `Máximo ${MAX_MB} MB. Las fotos grandes se reducen solas antes de subirlas.`
     : `Máximo ${MAX_MB} MB por archivo. Puedes elegir varios a la vez: se crea una ficha por cada uno.`;
 }
+/* ==================== PEDIDOS ==================== */
+const DIAS_LARGO = { L:"lunes", M:"martes", X:"miércoles", J:"jueves", V:"viernes", S:"sábado", D:"domingo" };
+const MANANA = DIAS[(DIAS.indexOf(HOY)+1)%7];
+// Próximo día de reparto a partir de mañana: "jueves 12/11".
+function proximaEntrega(dias){
+  if(!(dias||[]).length) return "";
+  const hoy = new Date();
+  for(let i = 1; i <= 7; i++){
+    const f = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()+i);
+    const letra = DIAS[(f.getDay()+6)%7];
+    if(dias.includes(letra)) return `${DIAS_LARGO[letra]} ${String(f.getDate()).padStart(2,"0")}/${String(f.getMonth()+1).padStart(2,"0")}`;
+  }
+  return "";
+}
+let PED = null;   // { d, cant:{i:texto} }
+function abrirPedido(id){
+  const d = DOCS.find(x => x.id === id); if(!d) return;
+  closeOverlay("viewOverlay");   // el pedido sustituye a la ficha (así Escape y el fondo funcionan bien)
+  PED = { d, cant:{} };
+  $("pedTitle").textContent = `Pedido · ${d.title}`;
+  $("pedInfo").innerHTML = [
+    (d.dias||[]).length ? `<span>Reparte: <b>${d.dias.join(" ")}</b></span>` : "",
+    d.horaLimite ? `<span>Pedir antes de: <b>${escapeHtml(d.horaLimite)}</b></span>` : "",
+    d.minimo ? `<span>Mínimo: <b>${escapeHtml(d.minimo)}</b></span>` : "",
+  ].join("");
+  // Centro: el filtro activo, o el de la ficha; si es "ambos", se elige.
+  const c = centroDe(d);
+  const opciones = c === AMBOS ? CENTROS : CENTROS.filter(x => x.id === c);
+  $("pedCentro").innerHTML = (opciones.length ? opciones : CENTROS).map(x => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("");
+  if(activeCentro !== "todos" && opciones.some(x => x.id === activeCentro)) $("pedCentro").value = activeCentro;
+  $("pedEntrega").value = proximaEntrega(d.dias);
+  $("pedExtra").value = "";
+  const ps = d.productos || [];
+  $("pedProdField").classList.toggle("hidden", !ps.length);
+  $("pedList").innerHTML = ps.map((p,i) => `<div class="ped-row" data-i="${i}">
+      <div><div>${escapeHtml(p.n)}</div><div class="sub">${escapeHtml([p.f, p.p].filter(Boolean).join(" · "))}</div></div>
+      <input data-i="${i}" inputmode="decimal" placeholder="—" aria-label="Cantidad de ${escapeHtml(p.n)}">
+    </div>`).join("");
+  $("pedList").querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
+    PED.cant[inp.dataset.i] = inp.value;
+    inp.closest(".ped-row").classList.toggle("on", !!inp.value.trim());
+    componerPedido();
+  }));
+  $("pedMail").classList.toggle("hidden", !d.email);
+  $("pedWa").classList.toggle("hidden", !waNumber(d.phone));
+  componerPedido();
+  show("pedOverlay");
+  setTimeout(() => { const f = $("pedList").querySelector("input"); if(f) f.focus(); }, 60);
+}
+function componerPedido(){
+  if(!PED) return;
+  const d = PED.d, ps = d.productos || [];
+  const lineas = ps.map((p,i) => {
+    const q = (PED.cant[i] || "").trim(); if(!q) return "";
+    return `- ${q} · ${p.n}${p.f ? ` (${p.f})` : ""}`;
+  }).filter(Boolean);
+  $("pedExtra").value.split("\n").map(l => l.trim()).filter(Boolean).forEach(l => lineas.push(`- ${l}`));
+  const saludo = d.contact ? `Hola ${d.contact.split(/\s+/)[0]},` : "Hola,";
+  const centro = centroName($("pedCentro").value);
+  const entrega = $("pedEntrega").value.trim();
+  $("pedTexto").value = `${saludo} pedido para ${centro}${entrega ? ` (entrega ${entrega})` : ""}:\n\n` +
+    (lineas.length ? lineas.join("\n") : "- ") + `\n\nGracias.`;
+  const vacio = !lineas.length;
+  ["pedWa","pedMail","pedCopiar"].forEach(id => $(id).disabled = vacio);
+}
+function enviarPedido(via){
+  const d = PED && PED.d; if(!d) return;
+  const txt = $("pedTexto").value;
+  if(via === "wa"){
+    const n = waNumber(d.phone); if(!n) return;
+    window.open(`https://wa.me/${n}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
+  }else if(via === "mail"){
+    const asunto = `Pedido ${centroName($("pedCentro").value)}${$("pedEntrega").value.trim() ? " · " + $("pedEntrega").value.trim() : ""}`;
+    window.location.href = `mailto:${encodeURIComponent(d.email)}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(txt)}`;
+  }else{
+    navigator.clipboard.writeText(txt).then(() => toast("Pedido copiado")).catch(() => { $("pedTexto").select(); toast("Selecciona y copia el texto"); });
+  }
+}
+
+/* Franja de la portada: quién reparte hoy y a quién hay que pedir hoy (reparte mañana). */
+function renderHoy(){
+  const el = $("hoybar");
+  const provs = DOCS.filter(d => d.cat === "proveedores" && centroVisible(d));
+  const reparte = provs.filter(d => (d.dias||[]).includes(HOY));
+  const pedir = provs.filter(d => (d.dias||[]).includes(MANANA));
+  const visible = (activeCat === "todas" || activeCat === "proveedores") && !query_.trim() && (reparte.length || pedir.length);
+  el.classList.toggle("hidden", !visible);
+  if(!visible){ el.innerHTML = ""; return; }
+  const chip = (d, extra) => `<button class="hp" data-id="${d.id}">${escapeHtml(d.title)}${extra ? `<small>${escapeHtml(extra)}</small>` : ""}</button>`;
+  el.innerHTML =
+    (pedir.length ? `<div class="hl"><span class="ht">Pedir hoy · llega ${DIAS_LARGO[MANANA]}</span><div class="hc">${pedir.map(d => chip(d, d.horaLimite ? "antes de " + d.horaLimite : "")).join("")}</div></div>` : "") +
+    (reparte.length ? `<div class="hl"><span class="ht">Reparten hoy</span><div class="hc">${reparte.map(d => chip(d, "")).join("")}</div></div>` : "");
+  el.querySelectorAll(".hp").forEach(b => b.addEventListener("click", () => openViewer(b.dataset.id)));
+}
+
 /* ==================== COMPARAPRECIOS (solo lectura) ====================
    Proyecto de Firebase de la app ComparaPrecios. Se usa una segunda app de
    Firebase con su propia sesión: aquí solo se LEE (proveedores, productos y
@@ -2514,7 +2661,7 @@ function closeOverlay(id){
   if(id==="addOverlay"){ editingId = null; }
   if(id==="impOverlay"){ IMP.editId = null; }
 }
-function closeAllOverlays(){ ["cpOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
+function closeAllOverlays(){ ["cpOverlay","pedOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
 // Cerrar pinchando fuera solo si el clic EMPIEZA y TERMINA fuera del recuadro
 // (al seleccionar texto y soltar el ratón fuera no se cierra). Los formularios no se cierran pinchando fuera.
@@ -2566,6 +2713,11 @@ $("prodAdd").addEventListener("click", ()=>{
 });
 $("fi-precios").addEventListener("change", ()=>addArchivos("precios"));
 $("cpOpen").addEventListener("click", cpOpen);
+["pedCentro","pedEntrega","pedExtra"].forEach(id => $(id).addEventListener("input", componerPedido));
+$("pedCentro").addEventListener("change", componerPedido);
+$("pedWa").addEventListener("click", () => enviarPedido("wa"));
+$("pedMail").addEventListener("click", () => enviarPedido("mail"));
+$("pedCopiar").addEventListener("click", () => enviarPedido("copiar"));
 $("cpLoginBtn").addEventListener("click", cpLogin);
 $("cpPass").addEventListener("keydown", e=>{ if(e.key==="Enter") cpLogin(); });
 $("cpProv").addEventListener("change", cpCargarProductos);
