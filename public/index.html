@@ -424,7 +424,8 @@
         <div class="field"><label for="f-cat">Categoría</label><select id="f-cat"></select></div>
         <div class="field"><label for="f-centro">Centro</label><select id="f-centro"></select></div>
       </div>
-      <div class="field"><label id="f-title-label" for="f-title">Título</label><input id="f-title" type="text" maxlength="200" placeholder="Ej. Plan APPCC 2026"></div>
+      <div class="field"><label id="f-title-label" for="f-title">Título</label><input id="f-title" type="text" maxlength="200" placeholder="Ej. Plan APPCC 2026">
+        <div class="hint hidden" id="f-title-multi">Con varios archivos, cada ficha toma el nombre de su archivo (luego puedes cambiarlo).</div></div>
       <div class="field hidden" id="subField">
         <label for="f-sub">Tipo de receta</label><select id="f-sub"></select>
         <div class="hint">¿La has visto en una web? Cierra y usa <b>Importar receta</b>: la pasa sola al formato de ficha.</div>
@@ -453,7 +454,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
           <span id="filebtn-text">Elegir archivo del dispositivo</span>
         </label>
-        <div class="hint" id="f-file-hint">Máximo 25 MB. Las fotos grandes se reducen solas antes de subirlas.</div>
+        <div class="hint" id="f-file-hint"></div>
       </div>
     </div>
     <div class="mfoot">
@@ -607,7 +608,7 @@ const CENTROS = [
 ];
 const AMBOS = "ambos";
 const CENTRO_FICHAS_ANTIGUAS = "guadiana";   // las fichas creadas antes de existir este campo
-const MAX_MB = 25;
+const MAX_MB = 100;   // debe coincidir con storage.rules
 
 const catById = id => CATS.find(c => c.id === id) || CATS[0];
 const centroDe = d => d.centro || CENTRO_FICHAS_ANTIGUAS;
@@ -739,17 +740,12 @@ const isPdf = d => (d.fileType||"").includes("pdf") || /\.pdf$/i.test(d.fileName
 const isImg = d => (d.fileType||"").startsWith("image");
 
 /* ==================== GUARDAR (crear y editar) ==================== */
-async function saveDoc(){
-  const title = $("f-title").value.trim();
-  if(!title){ $("f-title").focus(); return; }
-  const btn = $("saveDoc");
-  btn.disabled = true; btn.textContent = "Guardando…";
-
-  const old = editingId ? DOCS.find(x => x.id === editingId) : null;
+// Campos del formulario comunes a una o varias fichas (todo menos título y archivo).
+function datosFormulario(old){
   const cat = $("f-cat").value;
   const isProv = cat === "proveedores";
   const data = {
-    title, cat,
+    cat,
     centro: $("f-centro").value,
     tags: $("f-tags").value.split(",").map(t=>t.trim()).filter(Boolean),
     desc: $("f-desc").value.trim(),
@@ -763,8 +759,22 @@ async function saveDoc(){
   else if(old && "sub" in old) data.sub = deleteField();
   if(isProv) data.dias = [...document.querySelectorAll("#daysPicker .day.on")].map(b=>b.dataset.d);
   else if(old && "dias" in old) data.dias = deleteField();
+  return data;
+}
 
-  const file = $("f-file").files[0];
+async function saveDoc(){
+  const files = [...$("f-file").files];
+  if(!editingId && files.length > 1) return saveMany(files);
+
+  const title = $("f-title").value.trim();
+  if(!title){ $("f-title").focus(); return; }
+  const btn = $("saveDoc");
+  btn.disabled = true; btn.textContent = "Guardando…";
+
+  const old = editingId ? DOCS.find(x => x.id === editingId) : null;
+  const data = { title, ...datosFormulario(old) };
+
+  const file = files[0];
   let subido = null;
   try{
     if(file){
@@ -800,6 +810,57 @@ async function saveDoc(){
   }finally{
     btn.disabled = false; btn.textContent = "Guardar";
   }
+}
+
+// "folleto_verano-2026.pdf" -> "Folleto verano 2026"
+function tituloDeArchivo(name){
+  let t = String(name||"").replace(/\.[^.]+$/,"").replace(/[_\-.]+/g," ").replace(/\s+/g," ").trim();
+  t = t ? t.charAt(0).toUpperCase() + t.slice(1) : "Documento";
+  return t.slice(0, 200);
+}
+
+// Varios archivos de golpe: una ficha por archivo, con los mismos datos comunes.
+async function saveMany(files){
+  if(!navigator.onLine){ alert("Sin conexión no se pueden subir archivos. Espera a tener red."); return; }
+  const btn = $("saveDoc");
+  btn.disabled = true;
+  const comunes = datosFormulario(null);
+  const n = files.length;
+  let ok = 0, cola = 0;
+  const fallos = [];
+
+  for(let i = 0; i < n; i++){
+    const file = files[i];
+    let subido = null;
+    try{
+      btn.textContent = `Preparando ${i+1}/${n}…`;
+      const f = await prepararArchivo(file);
+      const path = `archivos/${Date.now()}_${i}_${f.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
+      await subir(path, f, pct => { btn.textContent = `Subiendo ${i+1}/${n}… ${pct}%`; });
+      subido = path;
+      const data = {
+        ...comunes,
+        title: tituloDeArchivo(file.name),
+        filePath:path, fileName:f.name, fileType:f.type, fileSize:f.size,
+        createdAt: serverTimestamp(),
+      };
+      const write = addDoc(collection(db, COL), data);
+      write.catch(()=>{});
+      const res = await Promise.race([ write.then(()=>"ok"), sleep(8000).then(()=>"cola") ]);
+      if(res === "cola") cola++; else ok++;
+    }catch(e){
+      if(subido) borrarArchivo(subido);
+      fallos.push(`• ${file.name}: ${e instanceof AvisoUsuario ? e.message : "no se pudo subir"}`);
+    }
+  }
+
+  btn.disabled = false; btn.textContent = "Guardar";
+  if(ok + cola > 0){
+    closeOverlay("addOverlay");
+    activeCat = "todas"; query_ = ""; $("search").value = ""; render();
+    toast(`${ok + cola} ficha(s) creadas` + (cola ? " (algunas se sincronizarán al volver la conexión)" : ""));
+  }
+  if(fallos.length) alert(`No se pudieron subir ${fallos.length} de ${n}:\n\n${fallos.join("\n")}`);
 }
 
 async function removeDoc(id){
@@ -1329,8 +1390,16 @@ function syncFileUi(){
     cf.classList.toggle("removed", quitarArchivo);
     $("curfileBtn").textContent = quitarArchivo ? "Deshacer" : "Quitar";
   }
-  if(f){ fb.classList.add("chosen"); txt.textContent = f.name; }
-  else { fb.classList.remove("chosen"); txt.textContent = tieneArchivo ? "Reemplazar por otro archivo" : "Elegir archivo del dispositivo"; }
+  const n = $("f-file").files.length;
+  if(f){ fb.classList.add("chosen"); txt.textContent = n > 1 ? `${n} archivos elegidos` : f.name; }
+  else { fb.classList.remove("chosen"); txt.textContent = tieneArchivo ? "Reemplazar por otro archivo" : (editingId ? "Elegir archivo del dispositivo" : "Elegir uno o varios archivos"); }
+  // Con varios archivos el título sale de cada nombre de archivo.
+  const multi = n > 1;
+  $("f-title").disabled = multi;
+  $("f-title-multi").classList.toggle("hidden", !multi);
+  $("f-file-hint").textContent = editingId
+    ? `Máximo ${MAX_MB} MB. Las fotos grandes se reducen solas antes de subirlas.`
+    : `Máximo ${MAX_MB} MB por archivo. Puedes elegir varios a la vez: se crea una ficha por cada uno.`;
 }
 function openForm(id=null){
   const d = id ? DOCS.find(x=>x.id===id) : null;
@@ -1338,6 +1407,7 @@ function openForm(id=null){
   $("f-sub").innerHTML = `<option value="">Sin clasificar</option>` + SUBCATS.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("");
   editingId = d ? d.id : null;
   quitarArchivo = false;
+  $("f-file").multiple = !d;   // varios archivos solo al crear
   $("addTitle").textContent = d ? "Editar ficha" : "Añadir";
   $("f-cat").innerHTML = CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
   $("f-centro").innerHTML = [...CENTROS.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`), `<option value="${AMBOS}">Ambos centros</option>`].join("");
