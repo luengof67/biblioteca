@@ -20,6 +20,7 @@ service cloud.firestore {
         // Proveedores: productos que se le compran y archivos por apartado
         && (!('productos' in d) || (d.productos is list && d.productos.size() <= 500))
         && (!('archivos' in d) || (d.archivos is list && d.archivos.size() <= 100))
+        && (!('cpProveedor' in d) || (d.cpProveedor is string && d.cpProveedor.size() <= 100))
         // Recetas: tipo de receta y ficha con ingredientes y pasos
         && (!('sub' in d) || (d.sub is string && d.sub.size() <= 40))
         && (!('receta' in d) || (d.receta is map

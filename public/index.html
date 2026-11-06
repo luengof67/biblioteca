@@ -243,6 +243,20 @@
   .frow.quitado .nm{text-decoration:line-through;color:var(--sumi-soft)}
   .frow .x{height:30px;width:auto;padding:0 10px;font-size:12.5px}
   .filebtn.small{padding:11px;font-size:13.5px}
+  .btn-cp{margin-top:8px;width:100%;padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;font-size:13.5px;color:var(--prov);display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-cp:hover{border-color:var(--prov)}
+  .cp-list{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .cp-row{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);cursor:pointer;font-size:14px}
+  .cp-row:first-child{border-top:none}
+  .cp-row input{width:18px;height:18px;accent-color:var(--prov)}
+  .cp-row .nm{font-weight:600}
+  .cp-row .sub{font-size:12px;color:var(--sumi-soft);margin-top:2px}
+  .cp-row .pr{text-align:right;font-weight:700;white-space:nowrap}
+  .cp-row .pr small{display:block;font-weight:500;font-size:11.5px;color:var(--sumi-soft)}
+  .cp-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0 8px;font-size:13px;color:var(--sumi-soft)}
+  .cp-tools button{border:none;background:none;color:var(--ai);font:inherit;font-weight:700;cursor:pointer;padding:0}
+  .cp-msg{padding:24px 12px;text-align:center;color:var(--sumi-soft);font-size:14px}
+  .cp-ya{font-size:11px;font-weight:700;color:var(--prov);margin-left:6px}
 
   /* ==================== RECETAS ==================== */
   .btn-imp{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:13px 17px;border:1px solid #e4c9c6;border-radius:11px;cursor:pointer;background:#fff;color:var(--shu);font:inherit;font-weight:700;font-size:14px;transition:.16s}
@@ -485,6 +499,7 @@
           <div class="prodhead"><span>Producto</span><span>Formato</span><span>Precio</span><span></span></div>
           <div id="prodList"></div>
           <button type="button" class="btn-addrow" id="prodAdd">+ Añadir producto</button>
+          <button type="button" class="btn-cp" id="cpOpen">⇣ Traer productos y últimos precios de ComparaPrecios</button>
         </div>
         <div class="field pform">
           <div class="ph">Precios · tarifas <span>(PDF o foto)</span></div>
@@ -606,6 +621,36 @@
   </div>
 </div>
 
+<!-- Modal: traer productos de ComparaPrecios -->
+<div class="overlay" id="cpOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+    <div class="mhead">
+      <h2 id="cpTitle">Desde ComparaPrecios</h2>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div id="cpLogin" class="hidden">
+        <p class="hint" style="margin-bottom:12px">Entra con tu cuenta de <b>ComparaPrecios</b> (solo la primera vez en este dispositivo).</p>
+        <div class="field"><label for="cpEmail">Correo</label><input id="cpEmail" type="email" autocomplete="username"></div>
+        <div class="field"><label for="cpPass">Contraseña</label><input id="cpPass" type="password" autocomplete="current-password"></div>
+        <div class="hint" id="cpErr" style="color:var(--shu)"></div>
+        <button class="btn-save" id="cpLoginBtn" style="width:100%;margin-top:6px">Conectar</button>
+      </div>
+      <div id="cpMain" class="hidden">
+        <div class="field"><label for="cpProv">Proveedor en ComparaPrecios</label><select id="cpProv"></select></div>
+        <div class="cp-tools"><span id="cpCount"></span><span><button type="button" id="cpAll">Todos</button> · <button type="button" id="cpNone">Ninguno</button></span></div>
+        <div class="cp-list" id="cpList"></div>
+        <div class="hint" style="margin-top:8px">Se añaden a la ficha y luego puedes cambiar el precio o el formato a mano antes de guardar.</div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-ghost" id="cpLogout" style="margin-right:auto" hidden>Desconectar</button>
+      <button class="btn-ghost" data-close>Cancelar</button>
+      <button class="btn-save" id="cpApply" disabled>Añadir a la ficha</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: visor -->
 <div class="overlay" id="viewOverlay">
   <div class="modal viewer" role="dialog" aria-modal="true" aria-labelledby="viewTitle">
@@ -622,7 +667,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
-         collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, deleteField }
+         collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, deleteField,
+         where, getDocs, getDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytesResumable, getBlob, getDownloadURL, deleteObject }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -844,6 +890,7 @@ async function saveDoc(){
   try{
     if(isProv){
       data.productos = productosDelFormulario();
+      if(cpLinkedProv) data.cpProveedor = cpLinkedProv;
       data.archivos = await prepararArchivosProveedor(btn, subidosProv);
       aBorrar = formArch.filter(a => a.quitar && a.path).map(a => a.path);
     }
@@ -1553,6 +1600,140 @@ function syncFileUi(){
     ? `Máximo ${MAX_MB} MB. Las fotos grandes se reducen solas antes de subirlas.`
     : `Máximo ${MAX_MB} MB por archivo. Puedes elegir varios a la vez: se crea una ficha por cada uno.`;
 }
+/* ==================== COMPARAPRECIOS (solo lectura) ====================
+   Proyecto de Firebase de la app ComparaPrecios. Se usa una segunda app de
+   Firebase con su propia sesión: aquí solo se LEE (proveedores, productos y
+   el historial de precios); nunca se escribe nada en ComparaPrecios. */
+const CP_CONFIG = {
+  apiKey: "AIzaSyC4qVhFLfQoqWyJuXtOl7f_5Hjypcp3JfY",
+  authDomain: "comparaprecio-a1191.firebaseapp.com",
+  projectId: "comparaprecio-a1191",
+  storageBucket: "comparaprecio-a1191.firebasestorage.app",
+  messagingSenderId: "1079747123375",
+  appId: "1:1079747123375:web:519908be9d18e0651c9c5a"
+};
+let CP = null;   // { app, auth, db, user, provs:[{id,nombre}], items:[...] }
+function cpInit(){
+  if(CP) return CP;
+  const app = initializeApp(CP_CONFIG, "comparaprecios");
+  CP = { app, auth:getAuth(app), db:getFirestore(app), user:null, provs:null, items:[] };
+  return CP;
+}
+const cpUser = () => new Promise(res => { const off = onAuthStateChanged(cpInit().auth, u => { off(); res(u); }); });
+const euros = n => (Math.round(n*100)/100).toLocaleString("es-ES",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const UNI = { kg:"kg", litro:"L", unidad:"ud" };
+const numTxt = n => n === Math.round(n) ? String(n) : n.toLocaleString("es-ES",{maximumFractionDigits:2});
+let cpLinkedProv = "";   // proveedor de ComparaPrecios enlazado a la ficha que se edita
+
+async function cpOpen(){
+  cpInit();
+  $("cpErr").textContent = "";
+  show("cpOverlay");
+  const u = await cpUser();
+  if(!u){
+    $("cpMain").classList.add("hidden"); $("cpLogin").classList.remove("hidden"); $("cpLogout").hidden = true;
+    $("cpApply").disabled = true;
+    if(!$("cpEmail").value && auth.currentUser) $("cpEmail").value = auth.currentUser.email || "";
+    setTimeout(() => ($("cpEmail").value ? $("cpPass") : $("cpEmail")).focus(), 50);
+    return;
+  }
+  CP.user = u;
+  $("cpLogin").classList.add("hidden"); $("cpMain").classList.remove("hidden"); $("cpLogout").hidden = false;
+  await cpCargarProveedores();
+}
+async function cpLogin(){
+  const b = $("cpLoginBtn"); b.disabled = true; b.textContent = "Conectando…"; $("cpErr").textContent = "";
+  try{
+    await signInWithEmailAndPassword(cpInit().auth, $("cpEmail").value.trim(), $("cpPass").value);
+    $("cpPass").value = "";
+    await cpOpen();
+  }catch(e){
+    $("cpErr").textContent = e.code === "auth/network-request-failed" ? "Sin conexión." : "Correo o contraseña de ComparaPrecios incorrectos.";
+  }finally{ b.disabled = false; b.textContent = "Conectar"; }
+}
+async function cpCargarProveedores(){
+  const sel = $("cpProv");
+  if(!CP.provs){
+    sel.innerHTML = `<option>Cargando…</option>`; $("cpList").innerHTML = `<div class="cp-msg">Cargando proveedores…</div>`;
+    try{
+      const snap = await getDocs(collection(CP.db, "proveedores"));
+      CP.provs = snap.docs.map(d => ({ id:d.id, nombre:(d.data().nombre||"").trim() })).filter(p => p.nombre)
+        .sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
+    }catch(e){
+      $("cpList").innerHTML = `<div class="cp-msg">No se pudo leer ComparaPrecios${e.code==="permission-denied" ? " (sin permiso con esta cuenta)" : ""}.</div>`;
+      sel.innerHTML = ""; return;
+    }
+  }
+  // Proveedor enlazado, o el que más se parece por nombre.
+  const nombre = norm($("f-title").value.trim());
+  const parecido = CP.provs.find(p => norm(p.nombre) === nombre)
+    || CP.provs.find(p => nombre && (norm(p.nombre).includes(nombre) || nombre.includes(norm(p.nombre))));
+  const elegido = CP.provs.some(p => p.id === cpLinkedProv) ? cpLinkedProv : (parecido ? parecido.id : "");
+  sel.innerHTML = `<option value="">— Elige el proveedor —</option>` +
+    CP.provs.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join("");
+  sel.value = elegido;
+  await cpCargarProductos();
+}
+async function cpCargarProductos(){
+  const provId = $("cpProv").value, list = $("cpList");
+  CP.items = [];
+  $("cpApply").disabled = true; $("cpCount").textContent = "";
+  if(!provId){ list.innerHTML = `<div class="cp-msg">Elige el proveedor para ver lo que le compras.</div>`; return; }
+  list.innerHTML = `<div class="cp-msg">Buscando precios…</div>`;
+  try{
+    const snap = await getDocs(query(collection(CP.db, "precios"), where("proveedorId", "==", provId)));
+    // Último precio de cada producto (los precios no se sobrescriben: manda el más reciente).
+    const ult = new Map();
+    snap.docs.forEach(d => {
+      const x = d.data(); if(!x.productoId) return;
+      const t = x.fecha && x.fecha.toMillis ? x.fecha.toMillis() : 0;
+      const prev = ult.get(x.productoId);
+      if(!prev || t > prev.t) ult.set(x.productoId, { ...x, t });
+    });
+    const prods = await Promise.all([...ult.keys()].map(id => getDoc(doc(CP.db, "productos", id)).catch(() => null)));
+    CP.items = prods.filter(pd => pd && pd.exists()).map(pd => {
+      const pr = pd.data(), x = ult.get(pd.id);
+      const uni = UNI[pr.unidadBase] || "kg";
+      const cant = Number(x.cantidad) || 0, paq = Number(x.precioPaquete) || 0, unit = Number(x.precioUnitario) || 0;
+      const env = (x.formato || "").trim();
+      const formato = env ? `${env}${cant>0 ? ` ${numTxt(cant)} ${uni}` : ""}` : (cant > 1 ? `${numTxt(cant)} ${uni}` : uni);
+      const precio = env && paq ? `${euros(paq)}${unit ? ` · ${euros(unit)}/${uni}` : ""}` : `${euros(unit || paq)}/${uni}`;
+      return { id:pd.id, n:(pr.nombre||"").trim(), f:formato, p:precio, fecha: x.t ? new Date(x.t).toISOString().slice(0,10) : "" };
+    }).filter(i => i.n).sort((a,b) => a.n.localeCompare(b.n, "es"));
+  }catch(e){
+    list.innerHTML = `<div class="cp-msg">No se pudieron leer los precios. Revisa la conexión.</div>`; return;
+  }
+  if(!CP.items.length){ list.innerHTML = `<div class="cp-msg">ComparaPrecios no tiene precios de este proveedor.</div>`; return; }
+  const yaIds = new Set(formProd.map(p => p.cp).filter(Boolean)), yaNom = new Set(formProd.map(p => norm(p.n)));
+  list.innerHTML = CP.items.map((it,i) => {
+    const ya = yaIds.has(it.id) || yaNom.has(norm(it.n));
+    return `<label class="cp-row"><input type="checkbox" data-i="${i}" checked>
+      <div><div class="nm">${escapeHtml(it.n)}${ya ? `<span class="cp-ya">YA EN LA FICHA · se actualiza</span>` : ""}</div><div class="sub">${escapeHtml(it.f)}</div></div>
+      <div class="pr">${escapeHtml(it.p)}<small>${fechaCorta(it.fecha)}</small></div></label>`;
+  }).join("");
+  list.querySelectorAll("input").forEach(c => c.addEventListener("change", cpContar));
+  cpContar();
+}
+function cpContar(){
+  const n = $("cpList").querySelectorAll("input:checked").length;
+  $("cpCount").textContent = `${n} de ${CP.items.length} elegidos`;
+  $("cpApply").disabled = n === 0;
+  $("cpApply").textContent = n ? `Añadir ${n} a la ficha` : "Añadir a la ficha";
+}
+function cpAplicar(){
+  const elegidos = [...$("cpList").querySelectorAll("input:checked")].map(c => CP.items[+c.dataset.i]);
+  let nuevos = 0, act = 0;
+  for(const it of elegidos){
+    const fila = formProd.find(p => p.cp === it.id) || formProd.find(p => norm(p.n) === norm(it.n));
+    if(fila){ Object.assign(fila, { f:it.f, p:it.p, p0:it.p, fecha:it.fecha, cp:it.id }); act++; }
+    else { formProd.push({ n:it.n, f:it.f, p:it.p, p0:it.p, fecha:it.fecha, cp:it.id }); nuevos++; }
+  }
+  cpLinkedProv = $("cpProv").value;
+  renderProdForm();
+  closeOverlay("cpOverlay");
+  toast([nuevos ? `${nuevos} añadidos` : "", act ? `${act} actualizados` : ""].filter(Boolean).join(" · ") + ". Revisa y pulsa Guardar.");
+}
+
 /* ---- Apartados del proveedor en el formulario ---- */
 function renderProdForm(){
   const el = $("prodList");
@@ -1614,9 +1795,9 @@ async function prepararArchivosProveedor(btn, subidos){
 }
 function productosDelFormulario(){
   return formProd
-    .map(p => ({ n:p.n.trim(), f:p.f.trim(), p:p.p.trim(), fecha:p.fecha||"", p0:p.p0 }))
+    .map(p => ({ n:p.n.trim(), f:p.f.trim(), p:p.p.trim(), fecha:p.fecha||"", p0:p.p0, cp:p.cp||"" }))
     .filter(p => p.n)
-    .map(p => ({ n:p.n, f:p.f, p:p.p, fecha: p.p && p.p !== p.p0 ? hoyISO() : (p.p ? p.fecha : "") }));
+    .map(p => ({ n:p.n, f:p.f, p:p.p, fecha: p.p && p.p !== p.p0 ? hoyISO() : (p.p ? p.fecha : ""), ...(p.cp ? { cp:p.cp } : {}) }));
 }
 
 function openForm(id=null){
@@ -1626,7 +1807,8 @@ function openForm(id=null){
   editingId = d ? d.id : null;
   quitarArchivo = false;
   $("f-file").multiple = !d;   // varios archivos solo al crear
-  formProd = ((d && d.productos) || []).map(p => ({ n:p.n||"", f:p.f||"", p:p.p||"", fecha:p.fecha||"", p0:p.p||"" }));
+  formProd = ((d && d.productos) || []).map(p => ({ n:p.n||"", f:p.f||"", p:p.p||"", fecha:p.fecha||"", p0:p.p||"", cp:p.cp||"" }));
+  cpLinkedProv = (d && d.cpProveedor) || "";
   formArch = ((d && d.archivos) || []).map(a => ({...a}));
   if(d && d.cat === "proveedores" && (d.filePath || d.fileUrl || d.link))
     formArch.unshift({ sec:"catalogos", legacy:true, name: d.fileName || (d.link ? "Enlace de Drive" : "Archivo adjunto") });
@@ -2332,7 +2514,7 @@ function closeOverlay(id){
   if(id==="addOverlay"){ editingId = null; }
   if(id==="impOverlay"){ IMP.editId = null; }
 }
-function closeAllOverlays(){ ["addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
+function closeAllOverlays(){ ["cpOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
 // Cerrar pinchando fuera solo si el clic EMPIEZA y TERMINA fuera del recuadro
 // (al seleccionar texto y soltar el ratón fuera no se cierra). Los formularios no se cierran pinchando fuera.
@@ -2383,6 +2565,14 @@ $("prodAdd").addEventListener("click", ()=>{
   const rows = $("prodList").querySelectorAll(".prodrow"); rows[rows.length-1].querySelector("input").focus();
 });
 $("fi-precios").addEventListener("change", ()=>addArchivos("precios"));
+$("cpOpen").addEventListener("click", cpOpen);
+$("cpLoginBtn").addEventListener("click", cpLogin);
+$("cpPass").addEventListener("keydown", e=>{ if(e.key==="Enter") cpLogin(); });
+$("cpProv").addEventListener("change", cpCargarProductos);
+$("cpAll").addEventListener("click", ()=>{ $("cpList").querySelectorAll("input").forEach(c=>c.checked=true); cpContar(); });
+$("cpNone").addEventListener("click", ()=>{ $("cpList").querySelectorAll("input").forEach(c=>c.checked=false); cpContar(); });
+$("cpApply").addEventListener("click", cpAplicar);
+$("cpLogout").addEventListener("click", async ()=>{ await signOut(cpInit().auth); CP.provs = null; cpOpen(); });
 $("fi-catalogos").addEventListener("change", ()=>addArchivos("catalogos"));
 
 /* ==================== INIT ==================== */
