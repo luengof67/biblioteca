@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#FAF8F3">
+<meta name="theme-color" content="#0C1B1E">
 <title>Biblioteca · Cocina</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+
 <style>
   :root{
     --washi:#FAF8F3; --washi-2:#F2EEE4; --sumi:#211F1B; --sumi-soft:#54504A;
@@ -277,6 +277,9 @@
   .cp-tools button{border:none;background:none;color:var(--ai);font:inherit;font-weight:700;cursor:pointer;padding:0}
   .cp-msg{padding:24px 12px;text-align:center;color:var(--sumi-soft);font-size:14px}
   .cp-ya{font-size:11px;font-weight:700;color:var(--prov);margin-left:6px}
+  .var{display:inline-block;font-size:11px;font-weight:800;padding:1px 6px;border-radius:4px;margin-left:6px;white-space:nowrap;vertical-align:1px}
+  .var.sube{background:#FBE7E5;color:#B22A21}
+  .var.baja{background:#E6F1EA;color:#2A6B47}
 
   /* ==================== RECETAS ==================== */
   .btn-imp{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:13px 17px;border:1px solid #e4c9c6;border-radius:11px;cursor:pointer;background:#fff;color:var(--shu);font:inherit;font-weight:700;font-size:14px;transition:.16s}
@@ -405,6 +408,81 @@
     .pr-src{font-size:10px;margin-top:12px;color:#444;word-break:break-all}
     @page{margin:1.6cm}
   }
+
+  /* ==================== TEMA TRAZA ====================
+     Mismo lenguaje visual que TRAZA: fondo gris acero claro, tarjetas blancas,
+     barra oscura arriba, acento verde azulado (--frio) y rótulos en versales.
+     Va al final para pisar el estilo anterior sin tocar la estructura. */
+  @media screen{
+  :root{
+    --ink:#0C1B1E; --ink-2:#22383C; --frio:#0B6E78; --frio-soft:#E3F1F2; --steel:#E7ECEC; --steel-2:#D3DCDC;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Roboto Mono","SF Mono",Menlo,Consolas,monospace;
+    --washi:#E7ECEC; --washi-2:#EEF3F3; --sumi:#0C1B1E; --sumi-soft:#4A6164;
+    --ai:#0B6E78; --ai-soft:#3E8F97; --shu:#B22A21; --line:#D3DCDC;
+    --kin:#A85B0C; --ok:#2A6B47; --prov:#0B6E78;
+    --shadow:0 1px 2px rgba(12,27,30,.05);
+  }
+  body, body *:not(.na-uid):not(code){font-family:var(--sans) !important}
+  body{background:var(--steel)}
+  body::before{display:none}
+
+  /* Barra oscura superior (a todo el ancho) */
+  header.top{position:sticky;top:0;z-index:40;background:var(--ink);color:#fff;border-bottom:none;
+    padding:12px 0 12px;box-shadow:0 0 0 100vmax var(--ink);clip-path:inset(0 -100vmax)}
+  .brand{gap:11px}
+  .hanko-sm{width:34px;height:34px;border-radius:8px;border:2px solid #7FD3DB;color:#7FD3DB;font-size:16px;
+    background:transparent;box-shadow:none;transform:none}
+  .brand h1{font-size:19px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#fff}
+  .brand .sub{font-size:11px;letter-spacing:.16em;color:#8FB3B6;margin-top:2px}
+  .brand .sub em{color:#fff}
+  .logout{background:#1B2F33;border:0;color:#9FBDC0;border-radius:999px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:9px 14px}
+  .logout:hover{background:#26404A;color:#fff}
+  .centros{background:transparent;padding:0;margin-top:12px;gap:4px}
+  .centro{background:#1B2F33;color:#9FBDC0;border-radius:999px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:9px 14px}
+  .centro:hover{color:#fff}
+  .centro.active{background:#fff;color:var(--ink);box-shadow:none}
+  .offline{margin-top:12px}
+
+  /* Barra de herramientas y filtros */
+  .toolbar{margin:16px 0;gap:8px}
+  .toolbar .search{flex:1 1 180px;min-width:170px}
+  .btn-print,.btn-imp,.btn-add{padding:12px 13px}
+  .search input{border-radius:6px;border-color:#9FB0B0}
+  .search input:focus,.field input:focus,.field select:focus,.field textarea:focus,.auth input:focus{outline:2px solid var(--frio);outline-offset:1px;border-color:var(--frio);box-shadow:none}
+  .btn-add,.btn-save,.auth button:not(.ghost){background:var(--ink);border-radius:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .btn-add:hover,.btn-save:hover,.auth button:not(.ghost):hover{background:var(--ink-2)}
+  .btn-print,.btn-ghost,.btn-vprint,.btn-del,.btn-imp{border-radius:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .chip{border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;border-color:var(--steel-2)}
+  .chip:hover{border-color:var(--frio);color:var(--frio)}
+  .chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+  .count{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+
+  /* Tarjetas */
+  .doc{border-radius:10px;border-color:var(--steel-2);box-shadow:none}
+  .doc:hover{box-shadow:0 2px 10px rgba(12,27,30,.08)}
+  .doc h3{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .doc .open-hint{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+  .badge{border-radius:4px}
+  .hoybar{border-radius:10px;border-color:var(--steel-2);border-left-color:var(--frio)}
+  .hoybar .hp{background:var(--frio-soft);border-color:#B9DBDE;color:var(--ink)}
+
+  /* Ventanas */
+  .modal{background:#fff;border-radius:10px}
+  .mhead{background:#fff;border-bottom:2px solid var(--ink)}
+  .mhead h2{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+  .mhead .close,.close{border-radius:6px}
+  .field label{font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:#4A6164}
+  .field label span{text-transform:none;letter-spacing:0;font-size:12px}
+  .field input,.field select,.field textarea{border-radius:6px;border-color:#9FB0B0}
+  .mfoot{background:#fff}
+
+  /* Acceso */
+  .auth{background:var(--steel)}
+  .auth .hanko{border-color:var(--frio);color:var(--frio);background:#fff;box-shadow:none;transform:none;border-radius:12px}
+  .auth h1{font-weight:800;letter-spacing:.22em;text-transform:uppercase;font-size:22px}
+  .auth input{border-radius:6px;border-color:#9FB0B0}
+  }
 </style>
 </head>
 <body>
@@ -457,6 +535,14 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="search" type="search" placeholder="Buscar por nombre, etiqueta, contacto…" autocomplete="off">
     </div>
+    <button class="btn-print hidden" id="cpAllBtn" title="Actualiza con ComparaPrecios los precios de todos los proveedores enlazados">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>
+      Actualizar precios
+    </button>
+    <button class="btn-print web-only" id="backupBtn" title="Descargar una copia de todas las fichas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+      Copia
+    </button>
     <button class="btn-print web-only" id="printBtn" title="Imprimir el listado que ves">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
       Imprimir
@@ -1381,6 +1467,7 @@ function render(){
   renderFilters();
   renderSubfilters();
   renderHoy();
+  $("cpAllBtn").classList.toggle("hidden", activeCat !== "proveedores");
   const grid = $("grid");
   const list = currentList();
   const q = query_.trim();
@@ -1567,7 +1654,7 @@ function productosHtml(d){
   const ps = d.productos || [];
   const filas = ps.map((p,i) => `<tr data-q="${escapeHtml(norm(p.n+" "+p.f))}">
       <td>${escapeHtml(p.n)}</td><td>${escapeHtml(p.f||"")}</td>
-      <td class="pr">${escapeHtml(p.p||"—")}</td><td class="fe">${fechaCorta(p.fecha)}</td></tr>`).join("");
+      <td class="pr">${escapeHtml(p.p||"—")}${varHtml(variacion(p.pa, p.p))}${p.pa ? `<div class="fe" title="Precio anterior">antes ${escapeHtml(p.pa)}</div>` : ""}</td><td class="fe">${fechaCorta(p.fecha)}</td></tr>`).join("");
   return `<div class="psec"><h4>Productos que se le compran ${ps.length?`<span class="n">${ps.length}</span>`:""}</h4>
     ${!ps.length ? `<div class="muted">Aún no hay productos. Pulsa <b>Editar</b> para añadirlos.</div>` : `
       ${ps.length > 8 ? `<input class="pfilter" id="prodFilter" placeholder="Buscar producto…">` : ""}
@@ -1652,6 +1739,30 @@ function syncFileUi(){
     ? `Máximo ${MAX_MB} MB. Las fotos grandes se reducen solas antes de subirlas.`
     : `Máximo ${MAX_MB} MB por archivo. Puedes elegir varios a la vez: se crea una ficha por cada uno.`;
 }
+/* ==================== COPIA DE SEGURIDAD ====================
+   Descarga un .json con todas las fichas (datos, productos, recetas y la ruta de cada
+   archivo). Los archivos en sí siguen en Firebase Storage. */
+function exportarCopia(){
+  const limpio = v => {
+    if(v && typeof v.toDate === "function") return v.toDate().toISOString();
+    if(Array.isArray(v)) return v.map(limpio);
+    if(v && typeof v === "object"){ const o = {}; for(const [k,x] of Object.entries(v)) if(!k.startsWith("_")) o[k] = limpio(x); return o; }
+    return v;
+  };
+  const fichas = DOCS.map(limpio);
+  const porCat = {};
+  fichas.forEach(f => { porCat[f.cat] = (porCat[f.cat]||0) + 1; });
+  const copia = { app:"Biblioteca de cocina", proyecto:"biblioteca-cocina", fecha:new Date().toISOString(),
+                  total:fichas.length, porCategoria:porCat, fichas };
+  const blob = new Blob([JSON.stringify(copia, null, 2)], { type:"application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `biblioteca-copia-${hoyISO()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  toast(`Copia descargada · ${fichas.length} fichas`);
+}
+
 /* ==================== PEDIDOS ==================== */
 const DIAS_LARGO = { L:"lunes", M:"martes", X:"miércoles", J:"jueves", V:"viernes", S:"sábado", D:"domingo" };
 const MANANA = DIAS[(DIAS.indexOf(HOY)+1)%7];
@@ -1769,6 +1880,26 @@ function cpInit(){
 const cpUser = () => new Promise(res => { const off = onAuthStateChanged(cpInit().auth, u => { off(); res(u); }); });
 const euros = n => (Math.round(n*100)/100).toLocaleString("es-ES",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
 const UNI = { kg:"kg", litro:"L", unidad:"ud" };
+/* Número de un precio escrito ("54,50 € · 10,90 €/kg"). Si hay precio por kg/L/ud se usa ese,
+   que es el comparable entre formatos; si no, el primer importe. */
+function precioNum(txt){
+  const t = String(txt||"");
+  const uni = /([\d.]+(?:,\d+)?|\d+(?:\.\d+)?)\s*€\s*\/\s*(kg|l|ud)/i.exec(t);
+  const m = uni || /([\d.]+(?:,\d+)?|\d+(?:\.\d+)?)\s*€?/.exec(t);
+  if(!m) return null;
+  let n = m[1];
+  n = n.includes(",") ? n.replace(/\./g,"").replace(",",".") : n;
+  const v = parseFloat(n);
+  return isFinite(v) && v > 0 ? { v, unit: !!uni } : null;
+}
+// Variación entre dos precios: "+8 %" / "−3 %", solo si son comparables.
+function variacion(antes, ahora){
+  const a = precioNum(antes), b = precioNum(ahora);
+  if(!a || !b || a.unit !== b.unit) return null;
+  const pct = Math.round((b.v - a.v) / a.v * 100);
+  return pct === 0 ? null : pct;
+}
+const varHtml = pct => pct == null ? "" : `<span class="var ${pct > 0 ? "sube" : "baja"}">${pct > 0 ? "↑ +" : "↓ −"}${Math.abs(pct)} %</span>`;
 const numTxt = n => n === Math.round(n) ? String(n) : n.toLocaleString("es-ES",{maximumFractionDigits:2});
 let cpLinkedProv = "";   // proveedor de ComparaPrecios enlazado a la ficha que se edita
 
@@ -1788,12 +1919,58 @@ async function cpOpen(){
   $("cpLogin").classList.add("hidden"); $("cpMain").classList.remove("hidden"); $("cpLogout").hidden = false;
   await cpCargarProveedores();
 }
+/* Actualiza de golpe los precios de todos los proveedores enlazados con ComparaPrecios.
+   Solo toca productos que ya están en cada ficha; los nuevos se cuentan pero no se añaden. */
+async function cpActualizarTodos(){
+  cpInit();
+  const u = await cpUser();
+  if(!u){ CP.after = cpActualizarTodos; await cpOpen(); return; }
+  if(!navigator.onLine){ alert("Necesitas conexión para actualizar precios."); return; }
+  const enlazados = DOCS.filter(d => d.cat === "proveedores" && d.cpProveedor && (d.productos||[]).length);
+  if(!enlazados.length){
+    alert("Ningún proveedor está enlazado todavía.\n\nEntra en un proveedor → Editar → «Traer productos y últimos precios de ComparaPrecios» y guarda. A partir de ahí se puede actualizar desde aquí.");
+    return;
+  }
+  const btn = $("cpAllBtn"); btn.disabled = true;
+  const res = { provs:0, precios:0, sube:0, baja:0, nuevos:0, errores:[] };
+  for(let k = 0; k < enlazados.length; k++){
+    const d = enlazados[k];
+    btn.lastChild.textContent = ` Actualizando ${k+1}/${enlazados.length}…`;
+    try{
+      const items = await cpUltimosPrecios(d.cpProveedor);
+      let cambios = 0;
+      const productos = (d.productos||[]).map(p => {
+        const it = (p.cp && items.find(i => i.id === p.cp)) || items.find(i => norm(i.n) === norm(p.n));
+        if(!it || (it.p === p.p && it.f === p.f)) return p;
+        const pct = variacion(p.p, it.p);
+        if(pct > 0) res.sube++; else if(pct < 0) res.baja++;
+        cambios++;
+        return { ...p, f:it.f, p:it.p, fecha:it.fecha, cp:it.id, ...(p.p && p.p !== it.p ? { pa:p.p } : {}) };
+      });
+      const usados = new Set(productos.map(p => p.cp).filter(Boolean));
+      res.nuevos += items.filter(i => !usados.has(i.id) && !productos.some(p => norm(p.n) === norm(i.n))).length;
+      if(cambios){
+        await updateDoc(doc(db, COL, d.id), { productos, updatedAt: serverTimestamp() });
+        res.provs++; res.precios += cambios;
+      }
+    }catch(e){ res.errores.push(d.title); }
+  }
+  btn.disabled = false; btn.lastChild.textContent = " Actualizar precios";
+  alert(
+    (res.precios ? `${res.precios} precio(s) actualizados en ${res.provs} proveedor(es).` : "Todos los precios ya estaban al día.") +
+    (res.sube || res.baja ? `\n↑ ${res.sube} han subido · ↓ ${res.baja} han bajado.` : "") +
+    (res.nuevos ? `\n\n${res.nuevos} producto(s) de ComparaPrecios aún no están en las fichas: añádelos desde «Editar» de cada proveedor.` : "") +
+    (res.errores.length ? `\n\nNo se pudo actualizar: ${res.errores.join(", ")}.` : "")
+  );
+}
+
 async function cpLogin(){
   const b = $("cpLoginBtn"); b.disabled = true; b.textContent = "Conectando…"; $("cpErr").textContent = "";
   try{
     await signInWithEmailAndPassword(cpInit().auth, $("cpEmail").value.trim(), $("cpPass").value);
     $("cpPass").value = "";
-    await cpOpen();
+    if(CP.after){ const sig = CP.after; CP.after = null; closeOverlay("cpOverlay"); sig(); }
+    else await cpOpen();
   }catch(e){
     $("cpErr").textContent = e.code === "auth/network-request-failed" ? "Sin conexión." : "Correo o contraseña de ComparaPrecios incorrectos.";
   }finally{ b.disabled = false; b.textContent = "Conectar"; }
@@ -1828,6 +2005,14 @@ async function cpCargarProductos(){
   if(!provId){ list.innerHTML = `<div class="cp-msg">Elige el proveedor para ver lo que le compras.</div>`; return; }
   list.innerHTML = `<div class="cp-msg">Buscando precios…</div>`;
   try{
+    CP.items = await cpUltimosPrecios(provId);
+  }catch(e){
+    list.innerHTML = `<div class="cp-msg">No se pudieron leer los precios. Revisa la conexión.</div>`; return;
+  }
+  cpPintarLista();
+}
+// Último precio de cada producto que se le compra a un proveedor de ComparaPrecios.
+async function cpUltimosPrecios(provId){
     const snap = await getDocs(query(collection(CP.db, "precios"), where("proveedorId", "==", provId)));
     // Último precio de cada producto (los precios no se sobrescriben: manda el más reciente).
     const ult = new Map();
@@ -1838,7 +2023,7 @@ async function cpCargarProductos(){
       if(!prev || t > prev.t) ult.set(x.productoId, { ...x, t });
     });
     const prods = await Promise.all([...ult.keys()].map(id => getDoc(doc(CP.db, "productos", id)).catch(() => null)));
-    CP.items = prods.filter(pd => pd && pd.exists()).map(pd => {
+    return prods.filter(pd => pd && pd.exists()).map(pd => {
       const pr = pd.data(), x = ult.get(pd.id);
       const uni = UNI[pr.unidadBase] || "kg";
       const cant = Number(x.cantidad) || 0, paq = Number(x.precioPaquete) || 0, unit = Number(x.precioUnitario) || 0;
@@ -1847,16 +2032,16 @@ async function cpCargarProductos(){
       const precio = env && paq ? `${euros(paq)}${unit ? ` · ${euros(unit)}/${uni}` : ""}` : `${euros(unit || paq)}/${uni}`;
       return { id:pd.id, n:(pr.nombre||"").trim(), f:formato, p:precio, fecha: x.t ? new Date(x.t).toISOString().slice(0,10) : "" };
     }).filter(i => i.n).sort((a,b) => a.n.localeCompare(b.n, "es"));
-  }catch(e){
-    list.innerHTML = `<div class="cp-msg">No se pudieron leer los precios. Revisa la conexión.</div>`; return;
-  }
+}
+function cpPintarLista(){
+  const list = $("cpList");
   if(!CP.items.length){ list.innerHTML = `<div class="cp-msg">ComparaPrecios no tiene precios de este proveedor.</div>`; return; }
-  const yaIds = new Set(formProd.map(p => p.cp).filter(Boolean)), yaNom = new Set(formProd.map(p => norm(p.n)));
   list.innerHTML = CP.items.map((it,i) => {
-    const ya = yaIds.has(it.id) || yaNom.has(norm(it.n));
+    const fila = formProd.find(p => p.cp === it.id) || formProd.find(p => norm(p.n) === norm(it.n));
+    const pct = fila ? variacion(fila.p, it.p) : null;
     return `<label class="cp-row"><input type="checkbox" data-i="${i}" checked>
-      <div><div class="nm">${escapeHtml(it.n)}${ya ? `<span class="cp-ya">YA EN LA FICHA · se actualiza</span>` : ""}</div><div class="sub">${escapeHtml(it.f)}</div></div>
-      <div class="pr">${escapeHtml(it.p)}<small>${fechaCorta(it.fecha)}</small></div></label>`;
+      <div><div class="nm">${escapeHtml(it.n)}${fila ? `<span class="cp-ya">YA EN LA FICHA${fila.p ? ` · tenías ${escapeHtml(fila.p)}` : ""}</span>` : ""}</div><div class="sub">${escapeHtml(it.f)}</div></div>
+      <div class="pr">${escapeHtml(it.p)}${varHtml(pct)}<small>${fechaCorta(it.fecha)}</small></div></label>`;
   }).join("");
   list.querySelectorAll("input").forEach(c => c.addEventListener("change", cpContar));
   cpContar();
@@ -1872,7 +2057,7 @@ function cpAplicar(){
   let nuevos = 0, act = 0;
   for(const it of elegidos){
     const fila = formProd.find(p => p.cp === it.id) || formProd.find(p => norm(p.n) === norm(it.n));
-    if(fila){ Object.assign(fila, { f:it.f, p:it.p, p0:it.p, fecha:it.fecha, cp:it.id }); act++; }
+    if(fila){ Object.assign(fila, { f:it.f, pa: fila.p && fila.p !== it.p ? fila.p : (fila.pa||""), p:it.p, p0:it.p, fecha:it.fecha, cp:it.id }); act++; }
     else { formProd.push({ n:it.n, f:it.f, p:it.p, p0:it.p, fecha:it.fecha, cp:it.id }); nuevos++; }
   }
   cpLinkedProv = $("cpProv").value;
@@ -1942,9 +2127,14 @@ async function prepararArchivosProveedor(btn, subidos){
 }
 function productosDelFormulario(){
   return formProd
-    .map(p => ({ n:p.n.trim(), f:p.f.trim(), p:p.p.trim(), fecha:p.fecha||"", p0:p.p0, cp:p.cp||"" }))
+    .map(p => ({ n:p.n.trim(), f:p.f.trim(), p:p.p.trim(), fecha:p.fecha||"", p0:p.p0, cp:p.cp||"", pa:p.pa||"" }))
     .filter(p => p.n)
-    .map(p => ({ n:p.n, f:p.f, p:p.p, fecha: p.p && p.p !== p.p0 ? hoyISO() : (p.p ? p.fecha : ""), ...(p.cp ? { cp:p.cp } : {}) }));
+    .map(p => {
+      const cambia = p.p && p.p0 && p.p !== p.p0;          // editado a mano: el anterior pasa a 'pa'
+      const pa = cambia ? p.p0 : p.pa;
+      return { n:p.n, f:p.f, p:p.p, fecha: p.p && p.p !== p.p0 ? hoyISO() : (p.p ? p.fecha : ""),
+               ...(p.cp ? { cp:p.cp } : {}), ...(pa && pa !== p.p ? { pa } : {}) };
+    });
 }
 
 function openForm(id=null){
@@ -1954,7 +2144,7 @@ function openForm(id=null){
   editingId = d ? d.id : null;
   quitarArchivo = false;
   $("f-file").multiple = !d;   // varios archivos solo al crear
-  formProd = ((d && d.productos) || []).map(p => ({ n:p.n||"", f:p.f||"", p:p.p||"", fecha:p.fecha||"", p0:p.p||"", cp:p.cp||"" }));
+  formProd = ((d && d.productos) || []).map(p => ({ n:p.n||"", f:p.f||"", p:p.p||"", fecha:p.fecha||"", p0:p.p||"", cp:p.cp||"", pa:p.pa||"" }));
   cpLinkedProv = (d && d.cpProveedor) || "";
   formArch = ((d && d.archivos) || []).map(a => ({...a}));
   if(d && d.cat === "proveedores" && (d.filePath || d.fileUrl || d.link))
@@ -2660,6 +2850,7 @@ function closeOverlay(id){
   if(id==="viewOverlay"){ cleanupViewer(); $("viewerContent").innerHTML = ""; }
   if(id==="addOverlay"){ editingId = null; }
   if(id==="impOverlay"){ IMP.editId = null; }
+  if(id==="cpOverlay" && CP && !$("cpLogin").classList.contains("hidden")) CP.after = null;
 }
 function closeAllOverlays(){ ["cpOverlay","pedOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
@@ -2713,6 +2904,8 @@ $("prodAdd").addEventListener("click", ()=>{
 });
 $("fi-precios").addEventListener("change", ()=>addArchivos("precios"));
 $("cpOpen").addEventListener("click", cpOpen);
+$("cpAllBtn").addEventListener("click", cpActualizarTodos);
+$("backupBtn").addEventListener("click", exportarCopia);
 ["pedCentro","pedEntrega","pedExtra"].forEach(id => $(id).addEventListener("input", componerPedido));
 $("pedCentro").addEventListener("change", componerPedido);
 $("pedWa").addEventListener("click", () => enviarPedido("wa"));
