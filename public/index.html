@@ -477,6 +477,16 @@
   .field input,.field select,.field textarea{border-radius:6px;border-color:#9FB0B0}
   .mfoot{background:#fff}
 
+  /* Fila del contador con acción a la derecha */
+  .countrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:16px 2px 22px}
+  .countrow .count{margin:0}
+  .linkbtn{border:none;background:none;color:var(--frio);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;padding:4px 0}
+  .linkbtn:hover{text-decoration:underline}
+  .cp-row.ya{opacity:.75}
+  .cp-row .tag{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--frio-soft);color:var(--frio);white-space:nowrap}
+  .chk{display:flex;align-items:center;gap:9px;font-size:14px;margin:4px 0 14px;cursor:pointer}
+  .chk input{width:18px;height:18px;accent-color:var(--frio)}
+
   /* Acceso */
   .auth{background:var(--steel)}
   .auth .hanko{border-color:var(--frio);color:var(--frio);background:#fff;box-shadow:none;transform:none;border-radius:12px}
@@ -560,7 +570,8 @@
   <div class="filters" id="filters"></div>
   <div class="subfilters hidden" id="subfilters"></div>
   <div class="hoybar hidden" id="hoybar"></div>
-  <div class="count" id="count"></div>
+  <div class="countrow"><div class="count" id="count"></div>
+    <button class="linkbtn hidden" id="cpProvBtn">⇣ Importar proveedores de ComparaPrecios</button></div>
   <div class="grid" id="grid"></div>
 
   <footer>Biblioteca privada · Cocina</footer>
@@ -752,6 +763,27 @@
       <button class="btn-ghost" id="pedCopiar">Copiar</button>
       <button class="btn-ghost" id="pedMail">Correo</button>
       <button class="btn-save btn-wa" id="pedWa">WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: importar proveedores de ComparaPrecios -->
+<div class="overlay" id="cpProvOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="cpProvTitle">
+    <div class="mhead">
+      <h2 id="cpProvTitle">Proveedores de ComparaPrecios</h2>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div class="field"><label for="cpProvCentro">Centro de las fichas nuevas</label><select id="cpProvCentro"></select></div>
+      <label class="chk"><input type="checkbox" id="cpProvProds" checked> Traer también sus productos y últimos precios</label>
+      <div class="cp-tools"><span id="cpProvCount"></span><span><button type="button" id="cpProvAll">Todos</button> · <button type="button" id="cpProvNone">Ninguno</button></span></div>
+      <div class="cp-list" id="cpProvList"></div>
+      <div class="hint" style="margin-top:8px">Se crea una ficha por proveedor con su nombre, teléfono o correo y notas. Los días de reparto, la hora límite y demás los rellenas tú después.</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-ghost" data-close>Cancelar</button>
+      <button class="btn-save" id="cpProvApply" disabled>Crear fichas</button>
     </div>
   </div>
 </div>
@@ -1468,6 +1500,7 @@ function render(){
   renderSubfilters();
   renderHoy();
   $("cpAllBtn").classList.toggle("hidden", activeCat !== "proveedores");
+  $("cpProvBtn").classList.toggle("hidden", activeCat !== "proveedores");
   const grid = $("grid");
   const list = currentList();
   const q = query_.trim();
@@ -1962,6 +1995,90 @@ async function cpActualizarTodos(){
     (res.nuevos ? `\n\n${res.nuevos} producto(s) de ComparaPrecios aún no están en las fichas: añádelos desde «Editar» de cada proveedor.` : "") +
     (res.errores.length ? `\n\nNo se pudo actualizar: ${res.errores.join(", ")}.` : "")
   );
+}
+
+/* Importar proveedores de ComparaPrecios como fichas nuevas (enlazadas). */
+let CPI = [];   // [{id, nombre, contacto, notas, ficha (existente o null)}]
+async function cpImportarProveedores(){
+  cpInit();
+  const u = await cpUser();
+  if(!u){ CP.after = cpImportarProveedores; await cpOpen(); return; }
+  CP.user = u;
+  const sel = $("cpProvCentro");
+  sel.innerHTML = [...CENTROS, { id:AMBOS, name:"Ambos centros" }].map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  sel.value = activeCentro !== "todos" ? activeCentro : AMBOS;
+  $("cpProvList").innerHTML = `<div class="cp-msg">Cargando proveedores…</div>`;
+  $("cpProvApply").disabled = true; $("cpProvCount").textContent = "";
+  show("cpProvOverlay");
+  try{
+    const snap = await getDocs(collection(CP.db, "proveedores"));
+    const provsBib = DOCS.filter(d => d.cat === "proveedores");
+    CPI = snap.docs.map(d => {
+      const x = d.data(), nombre = (x.nombre||"").trim();
+      const ficha = provsBib.find(f => f.cpProveedor === d.id) || provsBib.find(f => norm(f.title) === norm(nombre)) || null;
+      return { id:d.id, nombre, contacto:(x.contacto||"").trim(), notas:(x.notas||"").trim(), ficha };
+    }).filter(p => p.nombre).sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
+    CP.provs = CPI.map(p => ({ id:p.id, nombre:p.nombre }));
+  }catch(e){
+    $("cpProvList").innerHTML = `<div class="cp-msg">No se pudo leer ComparaPrecios${e.code==="permission-denied" ? " (sin permiso con esta cuenta)" : ""}.</div>`;
+    return;
+  }
+  if(!CPI.length){ $("cpProvList").innerHTML = `<div class="cp-msg">ComparaPrecios no tiene proveedores.</div>`; return; }
+  $("cpProvList").innerHTML = CPI.map((p,i) => {
+    const enlazada = p.ficha && p.ficha.cpProveedor === p.id;
+    const tag = enlazada ? "Ya tiene ficha" : p.ficha ? "Ya tiene ficha · se enlazará" : "";
+    return `<label class="cp-row ${enlazada ? "ya" : ""}"><input type="checkbox" data-i="${i}" ${enlazada ? "disabled" : "checked"}>
+      <div><div class="nm">${escapeHtml(p.nombre)}</div><div class="sub">${escapeHtml(p.contacto || "Sin contacto")}</div></div>
+      <div>${tag ? `<span class="tag">${tag}</span>` : ""}</div></label>`;
+  }).join("");
+  $("cpProvList").querySelectorAll("input").forEach(c => c.addEventListener("change", cpProvContar));
+  cpProvContar();
+}
+function cpProvContar(){
+  const marcados = [...$("cpProvList").querySelectorAll("input:checked")].map(c => CPI[+c.dataset.i]);
+  const nuevas = marcados.filter(p => !p.ficha).length, enlazar = marcados.length - nuevas;
+  $("cpProvCount").textContent = `${marcados.length} elegidos`;
+  $("cpProvApply").disabled = !marcados.length;
+  $("cpProvApply").textContent = [nuevas ? `Crear ${nuevas} ficha${nuevas===1?"":"s"}` : "", enlazar ? `enlazar ${enlazar}` : ""].filter(Boolean).join(" y ") || "Crear fichas";
+}
+// "600 11 22 33 / pedidos@x.es" -> { phone, email }
+function partirContacto(t){
+  const email = (/[^\s,;\/]+@[^\s,;\/]+\.[a-z]{2,}/i.exec(t) || [""])[0];
+  const tel = (/(\+?\d[\d\s.\-]{7,}\d)/.exec(t.replace(email, "")) || [""])[0].replace(/[^\d+]/g, "");
+  return { phone: tel, email };
+}
+async function cpProvAplicar(){
+  if(!navigator.onLine){ alert("Necesitas conexión para importar."); return; }
+  const marcados = [...$("cpProvList").querySelectorAll("input:checked")].map(c => CPI[+c.dataset.i]);
+  const conProductos = $("cpProvProds").checked, centro = $("cpProvCentro").value;
+  const btn = $("cpProvApply"); btn.disabled = true;
+  let creadas = 0, enlazadas = 0, nProd = 0; const fallos = [];
+  for(let i = 0; i < marcados.length; i++){
+    const p = marcados[i];
+    btn.textContent = `Importando ${i+1}/${marcados.length}…`;
+    try{
+      const productos = conProductos ? (await cpUltimosPrecios(p.id)).map(it => ({ n:it.n, f:it.f, p:it.p, fecha:it.fecha, cp:it.id })) : [];
+      if(p.ficha){
+        const upd = { cpProveedor:p.id, updatedAt:serverTimestamp() };
+        if(productos.length && !(p.ficha.productos||[]).length){ upd.productos = productos; nProd += productos.length; }
+        await updateDoc(doc(db, COL, p.ficha.id), upd);
+        enlazadas++;
+      }else{
+        const { phone, email } = partirContacto(p.contacto);
+        const data = { title:p.nombre.slice(0,200), cat:"proveedores", centro, tags:[], desc:p.notas,
+          contact:"", phone, email, horaLimite:"", minimo:"", dias:[], cpProveedor:p.id, productos,
+          createdAt:serverTimestamp() };
+        const write = addDoc(collection(db, COL), data); write.catch(()=>{});
+        await Promise.race([ write, sleep(8000) ]);
+        creadas++; nProd += productos.length;
+      }
+    }catch(e){ fallos.push(p.nombre); }
+  }
+  btn.disabled = false; cpProvContar();
+  closeOverlay("cpProvOverlay");
+  activeCat = "proveedores"; query_ = ""; $("search").value = ""; render();
+  toast([creadas ? `${creadas} fichas creadas` : "", enlazadas ? `${enlazadas} enlazadas` : "", nProd ? `${nProd} productos` : ""].filter(Boolean).join(" · ") || "Nada que importar");
+  if(fallos.length) alert(`No se pudieron importar: ${fallos.join(", ")}.`);
 }
 
 async function cpLogin(){
@@ -2852,7 +2969,7 @@ function closeOverlay(id){
   if(id==="impOverlay"){ IMP.editId = null; }
   if(id==="cpOverlay" && CP && !$("cpLogin").classList.contains("hidden")) CP.after = null;
 }
-function closeAllOverlays(){ ["cpOverlay","pedOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
+function closeAllOverlays(){ ["cpOverlay","cpProvOverlay","pedOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
 // Cerrar pinchando fuera solo si el clic EMPIEZA y TERMINA fuera del recuadro
 // (al seleccionar texto y soltar el ratón fuera no se cierra). Los formularios no se cierran pinchando fuera.
@@ -2905,6 +3022,10 @@ $("prodAdd").addEventListener("click", ()=>{
 $("fi-precios").addEventListener("change", ()=>addArchivos("precios"));
 $("cpOpen").addEventListener("click", cpOpen);
 $("cpAllBtn").addEventListener("click", cpActualizarTodos);
+$("cpProvBtn").addEventListener("click", cpImportarProveedores);
+$("cpProvApply").addEventListener("click", cpProvAplicar);
+$("cpProvAll").addEventListener("click", ()=>{ $("cpProvList").querySelectorAll("input:not(:disabled)").forEach(c=>c.checked=true); cpProvContar(); });
+$("cpProvNone").addEventListener("click", ()=>{ $("cpProvList").querySelectorAll("input").forEach(c=>c.checked=false); cpProvContar(); });
 $("backupBtn").addEventListener("click", exportarCopia);
 ["pedCentro","pedEntrega","pedExtra"].forEach(id => $(id).addEventListener("input", componerPedido));
 $("pedCentro").addEventListener("change", componerPedido);
