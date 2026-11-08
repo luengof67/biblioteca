@@ -487,6 +487,31 @@
   .chk{display:flex;align-items:center;gap:9px;font-size:14px;margin:4px 0 14px;cursor:pointer}
   .chk input{width:18px;height:18px;accent-color:var(--frio)}
 
+  /* Pedidos: importes e historial */
+  body.sin-importes .imp{visibility:hidden}
+  .ped-total{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;background:var(--frio-soft);border-radius:8px;font-size:14px}
+  .ped-total b{font-size:16px}
+  .ped-total small{color:var(--sumi-soft);font-size:12px}
+  .ojo{border:1px solid var(--steel-2);background:#fff;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sumi-soft);cursor:pointer;white-space:nowrap}
+  .ojo:hover{color:var(--frio);border-color:var(--frio)}
+  .hist-filtros{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hist-resumen{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 10px;font-size:13px;color:var(--sumi-soft)}
+  .hist-resumen b{color:var(--ink);font-size:16px}
+  .hist{border:1px solid var(--steel-2);border-radius:10px;background:#fff;overflow:hidden}
+  .hrow{display:grid;grid-template-columns:86px 1fr auto;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid var(--steel-2);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font:inherit;color:inherit}
+  .hrow:first-child{border-top:0}
+  .hrow:hover{background:#F6F9F9}
+  .hrow .fe{font-weight:800;font-size:13px;line-height:1.25}
+  .hrow .fe small{display:block;font-weight:500;font-size:11px;color:var(--sumi-soft)}
+  .hrow .pv{font-weight:600;font-size:14px}
+  .hrow .pv small{display:block;font-weight:400;font-size:12px;color:var(--sumi-soft)}
+  .hrow .im{font-weight:800;white-space:nowrap;text-align:right}
+  .hdet{padding:4px 14px 12px 112px;font-size:13px;background:#F6F9F9}
+  .hdet .l{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dotted var(--steel-2)}
+  .hdet .acc{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--sumi-soft)}
+  .hdet .acc button{border:none;background:none;color:var(--shu);font:inherit;font-weight:700;cursor:pointer;padding:0}
+  @media (max-width:560px){ .hrow{grid-template-columns:70px 1fr auto} .hdet{padding-left:14px} .hist-filtros{grid-template-columns:1fr} }
+
   /* Acceso */
   .auth{background:var(--steel)}
   .auth .hanko{border-color:var(--frio);color:var(--frio);background:#fff;box-shadow:none;transform:none;border-radius:12px}
@@ -571,7 +596,8 @@
   <div class="subfilters hidden" id="subfilters"></div>
   <div class="hoybar hidden" id="hoybar"></div>
   <div class="countrow"><div class="count" id="count"></div>
-    <button class="linkbtn hidden" id="cpProvBtn">⇣ Importar proveedores de ComparaPrecios</button></div>
+    <span><button class="linkbtn hidden" id="histBtn">☰ Pedidos hechos</button>
+    <button class="linkbtn hidden" id="cpProvBtn" style="margin-left:14px">⇣ Importar proveedores de ComparaPrecios</button></span></div>
   <div class="grid" id="grid"></div>
 
   <footer>Biblioteca privada · Cocina</footer>
@@ -756,13 +782,35 @@
         <label>Cantidades <span>(deja en blanco lo que no pidas)</span></label>
         <div id="pedList"></div>
       </div>
-      <div class="field"><label for="pedExtra">Otras cosas <span>(una por línea, opcional)</span></label><textarea id="pedExtra" placeholder="Ej. 2 kg de almejas"></textarea></div>
+      <div class="ped-total" id="pedTotalBox"><span>Importe estimado <span class="imp"><b id="pedTotal">0,00 €</b> <small id="pedSinPrecio"></small></span></span>
+        <button type="button" class="ojo" data-ojo>Ocultar importes</button></div>
+      <div class="field" style="margin-top:14px"><label for="pedExtra">Otras cosas <span>(una por línea, opcional)</span></label><textarea id="pedExtra" placeholder="Ej. 2 kg de almejas"></textarea></div>
       <div class="field"><label for="pedTexto">Mensaje <span>(puedes retocarlo)</span></label><textarea id="pedTexto"></textarea></div>
     </div>
     <div class="mfoot ped-acts">
       <button class="btn-ghost" id="pedCopiar">Copiar</button>
       <button class="btn-ghost" id="pedMail">Correo</button>
       <button class="btn-save btn-wa" id="pedWa">WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: pedidos hechos -->
+<div class="overlay" id="histOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <div class="mhead">
+      <h2 id="histTitle">Pedidos hechos</h2>
+      <span style="display:flex;gap:8px;align-items:center"><button type="button" class="ojo" data-ojo>Ocultar importes</button>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>
+    </div>
+    <div class="mbody">
+      <div class="hist-filtros">
+        <div class="field"><label for="histProv">Proveedor</label><select id="histProv"></select></div>
+        <div class="field"><label for="histMes">Mes de entrega</label><select id="histMes"></select></div>
+      </div>
+      <div class="hist-resumen"><span id="histCount"></span><span class="imp" id="histSuma"></span></div>
+      <div class="hist" id="histList"></div>
+      <div class="hint" style="margin-top:8px" id="histNota"></div>
     </div>
   </div>
 </div>
@@ -835,7 +883,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
          collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, deleteField,
-         where, getDocs, getDoc }
+         where, getDocs, getDoc, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytesResumable, getBlob, getDownloadURL, deleteObject }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -901,6 +949,12 @@ let activeCentro = store.get("bib.centro","todos");
 if(activeCentro!=="todos" && !CENTROS.some(c=>c.id===activeCentro)) activeCentro = "todos";
 let query_ = "";
 let unsub = null;
+let unsubPed = null;
+let PEDIDOS = [];
+function pararSuscripciones(){
+  if(unsub){ unsub(); unsub = null; }
+  if(unsubPed){ unsubPed(); unsubPed = null; }
+}
 let firstPaint = true;
 let editingId = null;
 let quitarArchivo = false;
@@ -943,7 +997,7 @@ onAuthStateChanged(auth, user => {
     $("authScreen").classList.add("hidden"); $("noAccess").classList.add("hidden"); $("app").classList.remove("hidden");
     subscribeDocs(user);
   }else{
-    if(unsub){ unsub(); unsub = null; }
+    pararSuscripciones();
     closeAllOverlays();
     $("app").classList.add("hidden"); $("noAccess").classList.add("hidden"); $("authScreen").classList.remove("hidden");
     loginBtn.disabled=false; loginBtn.textContent="Entrar"; $("password").value=""; DOCS=[]; firstPaint=true;
@@ -951,7 +1005,7 @@ onAuthStateChanged(auth, user => {
 });
 
 function showNoAccess(user){
-  if(unsub){ unsub(); unsub = null; }
+  pararSuscripciones();
   $("app").classList.add("hidden");
   $("naUid").textContent = user.uid;
   $("noAccess").classList.remove("hidden");
@@ -970,6 +1024,12 @@ function subscribeDocs(user){
     if(err.code === "permission-denied"){ showNoAccess(user); return; }
     $("grid").innerHTML = `<div class="empty"><div class="mark">!</div><h3>No se pudieron cargar</h3><p>Revisa tu conexión y vuelve a intentarlo.</p></div>`;
   });
+  // Pedidos hechos (historial)
+  if(unsubPed) unsubPed();
+  unsubPed = onSnapshot(query(collection(db, "pedidos"), orderBy("createdAt", "desc")), { includeMetadataChanges:false }, snap => {
+    PEDIDOS = snap.docs.map(d => ({ id:d.id, ...d.data({ serverTimestamps:"estimate" }) }));
+    if($("histOverlay").classList.contains("show")) renderHist();
+  }, () => { PEDIDOS = []; });
 }
 function setOffline(on){ $("offline").classList.toggle("hidden", !on); }
 window.addEventListener("online",  ()=>setOffline(false));
@@ -1501,6 +1561,7 @@ function render(){
   renderHoy();
   $("cpAllBtn").classList.toggle("hidden", activeCat !== "proveedores");
   $("cpProvBtn").classList.toggle("hidden", activeCat !== "proveedores");
+  $("histBtn").classList.toggle("hidden", activeCat !== "proveedores");
   const grid = $("grid");
   const list = currentList();
   const q = query_.trim();
@@ -1611,6 +1672,7 @@ function openViewer(id){
       </div>
       ${d.desc?`<div class="pnotes">${escapeHtml(d.desc)}</div>`:""}
       ${productosHtml(d)}
+      ${pedidosFichaHtml(d)}
       ${archivosHtml(d, "precios")}
       ${archivosHtml(d, "catalogos")}
       <div id="provMedia"></div>
@@ -1643,6 +1705,7 @@ function openViewer(id){
   on("edit", () => { closeOverlay("viewOverlay"); openForm(d.id); });
   on("print-one", () => printOne(d.id));
   on("pedido", () => abrirPedido(d.id));
+  on("historial", () => abrirHistorial(d.id));
   on("print-rec", () => printReceta(d.id, (VS && VS.factor) || 1));
   on("convertir", e => convertirPdf(d, e.currentTarget));
   on("print-file", () => printFile());
@@ -1814,7 +1877,7 @@ let PED = null;   // { d, cant:{i:texto} }
 function abrirPedido(id){
   const d = DOCS.find(x => x.id === id); if(!d) return;
   closeOverlay("viewOverlay");   // el pedido sustituye a la ficha (así Escape y el fondo funcionan bien)
-  PED = { d, cant:{} };
+  PED = { d, cant:{}, savedId:null };
   $("pedTitle").textContent = `Pedido · ${d.title}`;
   $("pedInfo").innerHTML = [
     (d.dias||[]).length ? `<span>Reparte: <b>${d.dias.join(" ")}</b></span>` : "",
@@ -1842,6 +1905,7 @@ function abrirPedido(id){
   $("pedMail").classList.toggle("hidden", !d.email);
   $("pedWa").classList.toggle("hidden", !waNumber(d.phone));
   componerPedido();
+  aplicarVerImportes();
   show("pedOverlay");
   setTimeout(() => { const f = $("pedList").querySelector("input"); if(f) f.focus(); }, 60);
 }
@@ -1860,10 +1924,15 @@ function componerPedido(){
     (lineas.length ? lineas.join("\n") : "- ") + `\n\nGracias.`;
   const vacio = !lineas.length;
   ["pedWa","pedMail","pedCopiar"].forEach(id => $(id).disabled = vacio);
+  const v = lineasPedido();
+  $("pedTotal").textContent = eur(v.total);
+  $("pedSinPrecio").textContent = v.sinPrecio ? `+ ${v.sinPrecio} sin precio` : "";
+  $("pedTotalBox").classList.toggle("hidden", !(PED.d.productos||[]).length);
 }
 function enviarPedido(via){
   const d = PED && PED.d; if(!d) return;
   const txt = $("pedTexto").value;
+  guardarPedido(via);
   if(via === "wa"){
     const n = waNumber(d.phone); if(!n) return;
     window.open(`https://wa.me/${n}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
@@ -1873,6 +1942,153 @@ function enviarPedido(via){
   }else{
     navigator.clipboard.writeText(txt).then(() => toast("Pedido copiado")).catch(() => { $("pedTexto").select(); toast("Selecciona y copia el texto"); });
   }
+}
+
+/* ---- Importe estimado ---- */
+// "1.234,50" -> 1234.5 · "54,50" -> 54.5 · "10.5" -> 10.5
+function numES(t){
+  t = String(t||"").trim();
+  if(/,/.test(t)) t = t.replace(/\./g,"").replace(",",".");
+  const v = parseFloat(t); return isFinite(v) ? v : null;
+}
+const UNI_Q = s => { const m = /\b(kg|kilos?|l|litros?|ud|uds|unidad(?:es)?)\b/i.exec(s||""); if(!m) return ""; const u = m[1].toLowerCase(); return u.startsWith("k") ? "kg" : u.startsWith("l") ? "l" : "ud"; };
+/* Importe de una línea: cantidad × precio.
+   - Si la cantidad lleva unidad (5 kg) y hay precio por esa unidad (€/kg), se usa ese.
+   - Si no, el primer importe del precio (el de la caja/bandeja), por ejemplo 2 cajas × 54,50 €. */
+function importeLinea(q, precio){
+  const mq = /\d+(?:[.,]\d+)?/.exec(q||""); if(!mq) return null;
+  const qn = numES(mq[0]); if(!qn) return null;
+  const uni = /(\d[\d.]*(?:,\d+)?)\s*€\s*\/\s*(kg|l|ud)/i.exec(precio||"");
+  const pri = /(\d[\d.]*(?:,\d+)?)\s*€/.exec(precio||"");
+  if(!pri) return null;
+  const uq = UNI_Q(q);
+  if(uni && (uq === uni[2].toLowerCase() || uni.index === pri.index)) return qn * numES(uni[1]);
+  return qn * numES(pri[1]);
+}
+const eur = n => (Math.round(n*100)/100).toLocaleString("es-ES",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+
+/* Mostrar u ocultar importes (se recuerda en este dispositivo). */
+let verImportes = true;
+try{ verImportes = localStorage.getItem("bib.verImportes") !== "0"; }catch(e){}
+function aplicarVerImportes(){
+  document.body.classList.toggle("sin-importes", !verImportes);
+  document.querySelectorAll("[data-ojo]").forEach(b => b.textContent = verImportes ? "Ocultar importes" : "Mostrar importes");
+}
+function alternarImportes(){
+  verImportes = !verImportes;
+  try{ localStorage.setItem("bib.verImportes", verImportes ? "1" : "0"); }catch(e){}
+  aplicarVerImportes();
+}
+
+/* Líneas del pedido que se está haciendo, con su importe. */
+function lineasPedido(){
+  const ps = (PED && PED.d.productos) || [];
+  const lineas = ps.map((p,i) => {
+    const q = (PED.cant[i] || "").trim(); if(!q) return null;
+    const imp = importeLinea(q, p.p);
+    return { n:p.n, f:p.f||"", q, p:p.p||"", imp: imp == null ? null : Math.round(imp*100)/100 };
+  }).filter(Boolean);
+  const extra = $("pedExtra").value.split("\n").map(l => l.trim()).filter(Boolean);
+  const total = Math.round(lineas.reduce((s,l) => s + (l.imp||0), 0)*100)/100;
+  const sinPrecio = lineas.filter(l => l.imp == null).length + extra.length;
+  return { lineas, extra, total, sinPrecio };
+}
+// "sábado 07/11" -> "2026-11-07" (año: el que deja la fecha más cerca de hoy)
+function entregaISO(txt){
+  const m = /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/.exec(txt||""); if(!m) return "";
+  const d = +m[1], mo = +m[2]; if(d < 1 || d > 31 || mo < 1 || mo > 12) return "";
+  let y = m[3] ? +m[3] : new Date().getFullYear(); if(y < 100) y += 2000;
+  if(!m[3]){ const hoy = new Date(); const f = new Date(y, mo-1, d); if((f - hoy) / 864e5 < -180) y++; else if((f - hoy) / 864e5 > 180) y--; }
+  return `${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+}
+/* Guarda (o actualiza, si ya se envió por otra vía) el pedido en el historial. */
+function guardarPedido(via){
+  const d = PED && PED.d; if(!d) return;
+  const { lineas, extra, total, sinPrecio } = lineasPedido();
+  const data = { provId:d.id, prov:d.title, centro:$("pedCentro").value,
+    entrega:$("pedEntrega").value.trim(), entregaISO:entregaISO($("pedEntrega").value),
+    lineas, extra, total, sinPrecio, via,
+    por:(auth.currentUser && auth.currentUser.email) || "" };
+  try{
+    if(PED.savedId){
+      updateDoc(doc(db, "pedidos", PED.savedId), data).catch(()=>{});
+    }else{
+      data.createdAt = serverTimestamp();
+      const ref = doc(collection(db, "pedidos"));
+      PED.savedId = ref.id;
+      setDoc(ref, data).catch(()=>{});
+    }
+  }catch(e){ console.warn("No se pudo guardar el pedido", e); }
+}
+
+/* ---- Historial de pedidos ---- */
+const DIA_CORTO = ["dom","lun","mar","mié","jue","vie","sáb"];
+const tsDate = t => !t ? null : typeof t.toDate === "function" ? t.toDate() : typeof t === "number" ? new Date(t) : null;
+function fechaPedido(p){
+  if(p.entregaISO){ const [y,m,d] = p.entregaISO.split("-").map(Number); const f = new Date(y, m-1, d);
+    return { tit:`${DIA_CORTO[f.getDay()]} ${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}`, mes:p.entregaISO.slice(0,7) }; }
+  const c = tsDate(p.createdAt);
+  return { tit:"Sin fecha", mes: c ? `${c.getFullYear()}-${String(c.getMonth()+1).padStart(2,"0")}` : "" };
+}
+const ordenPedidos = (a,b) => (b.entregaISO||"").localeCompare(a.entregaISO||"") || ((tsDate(b.createdAt)||0) - (tsDate(a.createdAt)||0));
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+let HIST_ABIERTO = null;
+function abrirHistorial(provId=""){
+  closeOverlay("viewOverlay");
+  const provs = [...new Map(PEDIDOS.map(p => [p.provId, p.prov])).entries()].sort((a,b) => a[1].localeCompare(b[1], "es"));
+  $("histProv").innerHTML = `<option value="">Todos</option>` + provs.map(([id,n]) => `<option value="${id}">${escapeHtml(n)}</option>`).join("");
+  $("histProv").value = provs.some(([id]) => id === provId) ? provId : "";
+  const meses = [...new Set(PEDIDOS.map(p => fechaPedido(p).mes).filter(Boolean))].sort().reverse();
+  $("histMes").innerHTML = `<option value="">Todos</option>` + meses.map(m => `<option value="${m}">${MESES[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join("");
+  HIST_ABIERTO = null;
+  renderHist();
+  aplicarVerImportes();
+  show("histOverlay");
+}
+function renderHist(){
+  const prov = $("histProv").value, mes = $("histMes").value;
+  const lista = PEDIDOS
+    .filter(p => activeCentro === "todos" || p.centro === activeCentro || p.centro === AMBOS)
+    .filter(p => !prov || p.provId === prov)
+    .filter(p => !mes || fechaPedido(p).mes === mes)
+    .sort(ordenPedidos);
+  const suma = lista.reduce((s,p) => s + (p.total||0), 0);
+  $("histCount").innerHTML = `<b>${lista.length}</b> pedido${lista.length===1?"":"s"}`;
+  $("histSuma").innerHTML = lista.length ? `Total <b>${eur(suma)}</b>` : "";
+  $("histNota").textContent = activeCentro === "todos" ? "" : `Solo pedidos de ${centroName(activeCentro)} (cambia el centro arriba para ver los demás).`;
+  if(!lista.length){ $("histList").innerHTML = `<div class="cp-msg">${PEDIDOS.length ? "No hay pedidos con estos filtros." : "Aún no hay pedidos. Se guardan solos al enviarlos desde «Hacer pedido» en la ficha de un proveedor."}</div>`; return; }
+  $("histList").innerHTML = lista.map(p => {
+    const f = fechaPedido(p), c = tsDate(p.createdAt);
+    const n = (p.lineas||[]).length + (p.extra||[]).length;
+    const abierto = HIST_ABIERTO === p.id;
+    return `<button class="hrow" data-id="${p.id}">
+        <div class="fe">${f.tit}<small>${c ? `pedido ${String(c.getDate()).padStart(2,"0")}/${String(c.getMonth()+1).padStart(2,"0")}` : ""}</small></div>
+        <div class="pv">${escapeHtml(p.prov)}<small>${escapeHtml(centroShort(p.centro))} · ${n} línea${n===1?"":"s"}${p.via==="wa"?" · WhatsApp":p.via==="mail"?" · correo":""}</small></div>
+        <div class="im imp">${p.total ? eur(p.total) : "—"}${p.sinPrecio ? `<small style="display:block;font-weight:500;font-size:11px;color:var(--sumi-soft)">+${p.sinPrecio} sin precio</small>` : ""}</div>
+      </button>
+      ${abierto ? `<div class="hdet">
+        ${(p.lineas||[]).map(l => `<div class="l"><span>${escapeHtml(l.q)} · ${escapeHtml(l.n)}${l.f ? ` <span style="color:var(--sumi-soft)">(${escapeHtml(l.f)})</span>` : ""}</span><span class="imp">${l.imp != null ? eur(l.imp) : "sin precio"}</span></div>`).join("")}
+        ${(p.extra||[]).map(x => `<div class="l"><span>${escapeHtml(x)}</span><span class="imp">sin precio</span></div>`).join("")}
+        <div class="acc"><span>${p.entrega ? `Entrega: ${escapeHtml(p.entrega)}` : ""}${p.por ? ` · por ${escapeHtml(p.por)}` : ""}</span><button data-del="${p.id}">Eliminar</button></div>
+      </div>` : ""}`;
+  }).join("");
+  $("histList").querySelectorAll(".hrow").forEach(b => b.addEventListener("click", () => { HIST_ABIERTO = HIST_ABIERTO === b.dataset.id ? null : b.dataset.id; renderHist(); }));
+  $("histList").querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async e => {
+    e.stopPropagation();
+    if(!confirm("¿Eliminar este pedido del historial?")) return;
+    try{ await deleteDoc(doc(db, "pedidos", b.dataset.del)); toast("Pedido eliminado"); }catch(err){ alert("No se pudo eliminar."); }
+  }));
+}
+/* Últimos pedidos en la ficha del proveedor. */
+function pedidosFichaHtml(d){
+  const ps = PEDIDOS.filter(p => p.provId === d.id).sort(ordenPedidos);
+  if(!ps.length) return "";
+  return `<div class="psec"><h4>Últimos pedidos <span class="n">${ps.length}</span></h4>
+    <div class="hist">${ps.slice(0,5).map(p => { const n = (p.lineas||[]).length + (p.extra||[]).length;
+      return `<div class="hrow" style="cursor:default"><div class="fe">${fechaPedido(p).tit}</div>
+        <div class="pv">${n} línea${n===1?"":"s"}<small>${escapeHtml(centroShort(p.centro))}</small></div>
+        <div class="im imp">${p.total ? eur(p.total) : "—"}</div></div>`; }).join("")}</div>
+    <button class="linkbtn" data-act="historial" style="margin-top:8px">Ver todos sus pedidos →</button></div>`;
 }
 
 /* Franja de la portada: quién reparte hoy y a quién hay que pedir hoy (reparte mañana). */
@@ -2969,7 +3185,7 @@ function closeOverlay(id){
   if(id==="impOverlay"){ IMP.editId = null; }
   if(id==="cpOverlay" && CP && !$("cpLogin").classList.contains("hidden")) CP.after = null;
 }
-function closeAllOverlays(){ ["cpOverlay","cpProvOverlay","pedOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
+function closeAllOverlays(){ ["cpOverlay","cpProvOverlay","pedOverlay","histOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
 // Cerrar pinchando fuera solo si el clic EMPIEZA y TERMINA fuera del recuadro
 // (al seleccionar texto y soltar el ratón fuera no se cierra). Los formularios no se cierran pinchando fuera.
@@ -3023,6 +3239,11 @@ $("fi-precios").addEventListener("change", ()=>addArchivos("precios"));
 $("cpOpen").addEventListener("click", cpOpen);
 $("cpAllBtn").addEventListener("click", cpActualizarTodos);
 $("cpProvBtn").addEventListener("click", cpImportarProveedores);
+$("histBtn").addEventListener("click", () => abrirHistorial());
+$("histProv").addEventListener("change", () => { HIST_ABIERTO = null; renderHist(); });
+$("histMes").addEventListener("change", () => { HIST_ABIERTO = null; renderHist(); });
+document.querySelectorAll("[data-ojo]").forEach(b => b.addEventListener("click", alternarImportes));
+aplicarVerImportes();
 $("cpProvApply").addEventListener("click", cpProvAplicar);
 $("cpProvAll").addEventListener("click", ()=>{ $("cpProvList").querySelectorAll("input:not(:disabled)").forEach(c=>c.checked=true); cpProvContar(); });
 $("cpProvNone").addEventListener("click", ()=>{ $("cpProvList").querySelectorAll("input").forEach(c=>c.checked=false); cpProvContar(); });

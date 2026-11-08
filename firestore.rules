@@ -41,6 +41,20 @@ service cloud.firestore {
       allow delete: if permitido();
     }
 
+    // Pedidos hechos a proveedores (historial con importe estimado)
+    function pedidoValido(d) {
+      return d.prov is string && d.prov.size() > 0 && d.prov.size() <= 200
+        && d.lineas is list && d.lineas.size() <= 500
+        && (!('extra' in d) || (d.extra is list && d.extra.size() <= 200))
+        && (!('total' in d) || d.total is number)
+        && (!('centro' in d) || d.centro is string);
+    }
+    match /pedidos/{id} {
+      allow read: if permitido();
+      allow create, update: if permitido() && pedidoValido(request.resource.data);
+      allow delete: if permitido();
+    }
+
     // Todo lo demás, cerrado.
     match /{document=**} {
       allow read, write: if false;
