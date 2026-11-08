@@ -392,6 +392,17 @@
     .p-item .d{font-size:12px;color:#333;margin-top:2px;line-height:1.5}
     .p-item .d b{color:#000}
     .p-foot{margin-top:24px;padding-top:10px;border-top:1px solid #999;font-size:10px;color:#666;text-align:center}
+    .p-tab{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+    .p-tab th{text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #000;padding:4px 6px}
+    .p-tab td{padding:5px 6px;border-bottom:1px dotted #bbb;vertical-align:top}
+    .p-tab td.q{font-weight:700;white-space:nowrap}
+    .p-tab td.e{text-align:right;white-space:nowrap}
+    .p-tab td.ok{width:22px}
+    .p-tab td.ok span{display:inline-block;width:13px;height:13px;border:1.5px solid #000}
+    .p-sub{font-size:11px;color:#333;font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px}
+    .p-total{margin-top:14px;text-align:right;font-size:14px;font-weight:700}
+    .p-firma{margin-top:30px;display:flex;gap:40px;font-size:11px}
+    .p-firma div{flex:1;border-top:1px solid #000;padding-top:4px}
     .p-page{break-after:page;text-align:center}
     .p-page:last-child{break-after:auto}
     .p-page img{max-width:100%;max-height:25cm}
@@ -511,6 +522,24 @@
   .hdet .acc{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--sumi-soft)}
   .hdet .acc button{border:none;background:none;color:var(--shu);font:inherit;font-weight:700;cursor:pointer;padding:0}
   @media (max-width:560px){ .hrow{grid-template-columns:70px 1fr auto} .hdet{padding-left:14px} .hist-filtros{grid-template-columns:1fr} }
+  .seg{display:inline-flex;background:var(--steel);border-radius:999px;padding:3px;margin-bottom:14px}
+  .seg button{border:0;background:none;border-radius:999px;padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--sumi-soft);cursor:pointer}
+  .seg button.on{background:var(--ink);color:#fff}
+  .dia{border:1px solid var(--steel-2);border-radius:10px;background:#fff;margin-bottom:12px;overflow:hidden}
+  .dia-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px;background:var(--ink);color:#fff}
+  .dia-h .t{font-weight:800;font-size:14px;letter-spacing:.02em}
+  .dia-h .marca{font-size:10px;font-weight:800;letter-spacing:.12em;background:#7FD3DB;color:var(--ink);border-radius:4px;padding:2px 6px}
+  .dia-h .r{font-size:12px;color:#9FBDC0}
+  .dia-h .tot{margin-left:auto;font-weight:800}
+  .dia-h button{border:1px solid #3A5458;background:#1B2F33;color:#fff;border-radius:6px;padding:6px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+  .dia-p{padding:10px 14px;border-top:1px solid var(--steel-2)}
+  .dia-p:first-of-type{border-top:0}
+  .dia-pn{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px;margin-bottom:4px}
+  .dia-pn small{font-weight:400;font-size:12px;color:var(--sumi-soft)}
+  .dia-pn .imp{margin-left:auto;font-weight:800}
+  .dia-l{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0 3px 12px;border-left:2px solid var(--steel-2);color:var(--sumi)}
+  .dia-l .q{font-weight:700;margin-right:6px}
+  .dia-l .imp{color:var(--sumi-soft);white-space:nowrap}
 
   /* Acceso */
   .auth{background:var(--steel)}
@@ -804,6 +833,7 @@
       <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>
     </div>
     <div class="mbody">
+      <div class="seg" id="histVista"><button data-v="lista" class="on">Lista</button><button data-v="dia">Por día</button></div>
       <div class="hist-filtros">
         <div class="field"><label for="histProv">Proveedor</label><select id="histProv"></select></div>
         <div class="field"><label for="histMes">Mes de entrega</label><select id="histMes"></select></div>
@@ -2033,6 +2063,8 @@ function fechaPedido(p){
 const ordenPedidos = (a,b) => (b.entregaISO||"").localeCompare(a.entregaISO||"") || ((tsDate(b.createdAt)||0) - (tsDate(a.createdAt)||0));
 const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 let HIST_ABIERTO = null;
+let HIST_VISTA = "lista";
+try{ HIST_VISTA = localStorage.getItem("bib.histVista") === "dia" ? "dia" : "lista"; }catch(e){}
 function abrirHistorial(provId=""){
   closeOverlay("viewOverlay");
   const provs = [...new Map(PEDIDOS.map(p => [p.provId, p.prov])).entries()].sort((a,b) => a[1].localeCompare(b[1], "es"));
@@ -2047,6 +2079,7 @@ function abrirHistorial(provId=""){
 }
 function renderHist(){
   const prov = $("histProv").value, mes = $("histMes").value;
+  $("histList").style.border = ""; $("histList").style.background = "";
   const lista = PEDIDOS
     .filter(p => activeCentro === "todos" || p.centro === activeCentro || p.centro === AMBOS)
     .filter(p => !prov || p.provId === prov)
@@ -2056,7 +2089,10 @@ function renderHist(){
   $("histCount").innerHTML = `<b>${lista.length}</b> pedido${lista.length===1?"":"s"}`;
   $("histSuma").innerHTML = lista.length ? `Total <b>${eur(suma)}</b>` : "";
   $("histNota").textContent = activeCentro === "todos" ? "" : `Solo pedidos de ${centroName(activeCentro)} (cambia el centro arriba para ver los demás).`;
+  $("histVista").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === HIST_VISTA));
+  if(lista.length && HIST_VISTA === "dia"){ renderHistDias(lista); return; }
   if(!lista.length){ $("histList").innerHTML = `<div class="cp-msg">${PEDIDOS.length ? "No hay pedidos con estos filtros." : "Aún no hay pedidos. Se guardan solos al enviarlos desde «Hacer pedido» en la ficha de un proveedor."}</div>`; return; }
+  $("histList").style.border = ""; $("histList").style.background = "";
   $("histList").innerHTML = lista.map(p => {
     const f = fechaPedido(p), c = tsDate(p.createdAt);
     const n = (p.lineas||[]).length + (p.extra||[]).length;
@@ -2079,6 +2115,57 @@ function renderHist(){
     try{ await deleteDoc(doc(db, "pedidos", b.dataset.del)); toast("Pedido eliminado"); }catch(err){ alert("No se pudo eliminar."); }
   }));
 }
+/* ---- Relación de pedidos por día de entrega ---- */
+const ISO_HOY = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+function diaLargo(iso){
+  if(!iso) return "Sin fecha de entrega";
+  const [y,m,d] = iso.split("-").map(Number);
+  const t = new Date(y, m-1, d).toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long" }).replace(",", "");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+function agruparPorDia(lista){
+  const g = new Map();
+  lista.forEach(p => { const k = p.entregaISO || ""; if(!g.has(k)) g.set(k, []); g.get(k).push(p); });
+  return [...g.entries()].sort((a,b) => (b[0]||"").localeCompare(a[0]||""));   // sin fecha, al final
+}
+function renderHistDias(lista){
+  const hoy = ISO_HOY(), man = (() => { const d = new Date(); d.setDate(d.getDate()+1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
+  $("histList").innerHTML = agruparPorDia(lista).map(([iso, ps]) => {
+    const tot = ps.reduce((s,p) => s + (p.total||0), 0);
+    const provs = new Set(ps.map(p => p.provId)).size;
+    return `<div class="dia">
+      <div class="dia-h"><span class="t">${escapeHtml(diaLargo(iso))}</span>
+        ${iso === hoy ? `<span class="marca">HOY</span>` : iso === man ? `<span class="marca">MAÑANA</span>` : ""}
+        <span class="r">${ps.length} pedido${ps.length===1?"":"s"}${provs !== ps.length ? ` · ${provs} proveedor${provs===1?"":"es"}` : ""}</span>
+        <span class="tot imp">${tot ? eur(tot) : ""}</span>
+        <button data-print-dia="${iso}">Imprimir</button></div>
+      ${ps.map(p => `<div class="dia-p">
+        <div class="dia-pn">${escapeHtml(p.prov)} <small>${escapeHtml(centroShort(p.centro))}</small><span class="imp">${p.total ? eur(p.total) : ""}</span></div>
+        ${(p.lineas||[]).map(l => `<div class="dia-l"><span><span class="q">${escapeHtml(l.q)}</span>${escapeHtml(l.n)}${l.f ? ` <span style="color:var(--sumi-soft)">(${escapeHtml(l.f)})</span>` : ""}</span><span class="imp">${l.imp != null ? eur(l.imp) : ""}</span></div>`).join("")}
+        ${(p.extra||[]).map(x => `<div class="dia-l"><span>${escapeHtml(x)}</span><span></span></div>`).join("")}
+      </div>`).join("")}
+    </div>`;
+  }).join("");
+  $("histList").style.border = "0"; $("histList").style.background = "none";
+  $("histList").querySelectorAll("[data-print-dia]").forEach(b => b.addEventListener("click", () =>
+    imprimirDia(b.dataset.printDia, lista.filter(p => (p.entregaISO||"") === b.dataset.printDia))));
+}
+/* Hoja para la recepción de mercancía: lo que llega ese día, por proveedor, con casilla de recibido. */
+function imprimirDia(iso, ps){
+  const conImp = verImportes;
+  const tot = ps.reduce((s,p) => s + (p.total||0), 0);
+  const secciones = ps.map(p => `<div class="p-section">
+    <div class="p-cat">${escapeHtml(p.prov)}<span class="p-sub">${escapeHtml(centroName(p.centro))}${conImp && p.total ? ` · ${eur(p.total)}` : ""}</span></div>
+    <table class="p-tab"><thead><tr><th></th><th>Cantidad</th><th>Producto</th><th>Formato</th>${conImp ? `<th style="text-align:right">Importe</th>` : ""}</tr></thead><tbody>
+      ${(p.lineas||[]).map(l => `<tr><td class="ok"><span></span></td><td class="q">${escapeHtml(l.q)}</td><td>${escapeHtml(l.n)}</td><td>${escapeHtml(l.f||"")}</td>${conImp ? `<td class="e">${l.imp != null ? eur(l.imp) : "—"}</td>` : ""}</tr>`).join("")}
+      ${(p.extra||[]).map(x => `<tr><td class="ok"><span></span></td><td class="q" colspan="3">${escapeHtml(x)}</td>${conImp ? `<td class="e">—</td>` : ""}</tr>`).join("")}
+    </tbody></table></div>`).join("");
+  $("printArea").innerHTML = printHeadHtml(`Relación de pedidos · entrega ${diaLargo(iso)}`) + secciones +
+    (conImp && tot ? `<div class="p-total">Total estimado del día: ${eur(tot)}</div>` : "") +
+    `<div class="p-firma"><div>Recibido por</div><div>Hora</div><div>Incidencias</div></div>` + PFOOT;
+  imprimir();
+}
+
 /* Últimos pedidos en la ficha del proveedor. */
 function pedidosFichaHtml(d){
   const ps = PEDIDOS.filter(p => p.provId === d.id).sort(ordenPedidos);
@@ -3241,6 +3328,10 @@ $("cpAllBtn").addEventListener("click", cpActualizarTodos);
 $("cpProvBtn").addEventListener("click", cpImportarProveedores);
 $("histBtn").addEventListener("click", () => abrirHistorial());
 $("histProv").addEventListener("change", () => { HIST_ABIERTO = null; renderHist(); });
+$("histVista").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+  HIST_VISTA = b.dataset.v; try{ localStorage.setItem("bib.histVista", HIST_VISTA); }catch(e){}
+  HIST_ABIERTO = null; renderHist();
+}));
 $("histMes").addEventListener("change", () => { HIST_ABIERTO = null; renderHist(); });
 document.querySelectorAll("[data-ojo]").forEach(b => b.addEventListener("click", alternarImportes));
 aplicarVerImportes();
