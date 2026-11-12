@@ -1969,6 +1969,10 @@ async function ftLeer(){
   try{
     const r = await llamarLector("/tabla", { imagen:FT.foto.data, tipo:FT.foto.tipo });
     FT.doc = r.documento;
+    // Una columna que llega vacía en todas las filas (p. ej. Formato) se marca también para rellenar.
+    FT.doc.tablas.forEach(t => t.columnas.forEach((c, ci) => {
+      if(!t.rellenar.includes(ci) && t.filas.every(f => !String(f[ci]||"").trim())) t.rellenar = [...t.rellenar, ci].sort((a,b) => a-b);
+    }));
     ftMostrarEditor();
   }catch(e){
     $("ftErr").textContent = e instanceof AvisoUsuario ? e.message : "No se pudo leer la foto.";
@@ -2052,6 +2056,14 @@ function anchosColumnas(t, total, anchoRell){
   return t.columnas.map((c, ci) => t.rellenar.includes(ci) ? anchoRell : libre * pesos[ci] / suma);
 }
 
+// Las tablas con las mismas columnas se miden juntas, para que salgan todas con los mismos anchos.
+function paraMedir(doc, t){
+  const k = x => x.columnas.length + "|" + x.rellenar.join(",");
+  const g = doc.tablas.filter(x => k(x) === k(t));
+  return { columnas: t.columnas.map((c, ci) => g.map(x => String(x.columnas[ci]||"")).sort((a,b) => b.length - a.length)[0]),
+           rellenar: t.rellenar, filas: g.flatMap(x => x.filas) };
+}
+
 /* ---- Word (.docx) ---- */
 async function ftWord(){
   let doc; try{ doc = ftDocumento(); }catch(e){ alert(e.message); return; }
@@ -2062,17 +2074,17 @@ async function ftWord(){
     const apaisado = doc.tablas.some(t => t.columnas.length > 5);
     const W = apaisado ? 16838 : 11906, H = apaisado ? 11906 : 16838, M = 1000, util = W - 2*M;
     const run = (txt, o = {}) => `<w:r><w:rPr>${o.b ? "<w:b/>" : ""}${o.color ? `<w:color w:val="${o.color}"/>` : ""}<w:sz w:val="${o.sz||20}"/></w:rPr><w:t xml:space="preserve">${x(txt)}</w:t></w:r>`;
-    const par = (contenido, o = {}) => `<w:p><w:pPr>${o.esp ? `<w:spacing w:after="${o.esp}"/>` : `<w:spacing w:after="0"/>`}${o.al ? `<w:jc w:val="${o.al}"/>` : ""}</w:pPr>${contenido}</w:p>`;
+    const par = (contenido, o = {}) => `<w:p><w:pPr>${o.kn ? "<w:keepNext/>" : ""}${o.esp ? `<w:spacing w:after="${o.esp}"/>` : `<w:spacing w:after="0"/>`}${o.al ? `<w:jc w:val="${o.al}"/>` : ""}</w:pPr>${contenido}</w:p>`;
     let id = 1;
     const tabla = t => {
-      const anchos = anchosColumnas(t, util, 1500).map(Math.round);
+      const anchos = anchosColumnas(paraMedir(doc, t), util, 1500).map(Math.round);
       const borde = `<w:top w:val="single" w:sz="4" w:color="9FB0B0"/><w:left w:val="single" w:sz="4" w:color="9FB0B0"/><w:bottom w:val="single" w:sz="4" w:color="9FB0B0"/><w:right w:val="single" w:sz="4" w:color="9FB0B0"/><w:insideH w:val="single" w:sz="4" w:color="9FB0B0"/><w:insideV w:val="single" w:sz="4" w:color="9FB0B0"/>`;
       const celda = (contenido, w, o = {}) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.fondo ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fondo}"/>` : ""}<w:vAlign w:val="center"/></w:tcPr>${contenido}</w:tc>`;
-      const cab = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${t.columnas.map((c, ci) => celda(par(run(c, { b:true, sz:18 })), anchos[ci], { fondo:"D3DCDC" })).join("")}</w:tr>`;
+      const cab = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${t.columnas.map((c, ci) => celda(par(run(c, { b:true, sz:18 }), { kn:true }), anchos[ci], { fondo:"D3DCDC" })).join("")}</w:tr>`;
       const filas = t.filas.map(f => `<w:tr><w:trPr><w:trHeight w:val="400"/></w:trPr>${f.map((v, ci) => t.rellenar.includes(ci)
         ? celda(`<w:sdt><w:sdtPr><w:alias w:val="${x(t.columnas[ci] || "Precio")}"/><w:tag w:val="campo${id}"/><w:id w:val="${id++}"/><w:text/></w:sdtPr><w:sdtContent>${par(run(" ", { sz:20 }))}</w:sdtContent></w:sdt>`, anchos[ci], { fondo:"EEF6F6" })
         : celda(par(run(v, { sz:20 })), anchos[ci])).join("")}</w:tr>`).join("");
-      return (t.titulo ? par(run(t.titulo, { b:true, sz:24 }), { esp:80 }) : "") +
+      return (t.titulo ? par(run(t.titulo, { b:true, sz:24 }), { esp:80, kn:true }) : "") +
         `<w:tbl><w:tblPr><w:tblW w:w="${util}" w:type="dxa"/><w:tblBorders>${borde}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr>` +
         `<w:tblGrid>${anchos.map(a => `<w:gridCol w:w="${a}"/>`).join("")}</w:tblGrid>${cab}${filas}</w:tbl>` + par("", { esp:200 });
     };
@@ -2136,12 +2148,12 @@ async function ftPdfBytes(doc){
   pagina.drawText(seguro(subtituloDoc()), { x:M, y:y-10, size:9, font:fuente, color:suave }); y -= 26;
 
   for(const t of doc.tablas){
-    const anchos = anchosColumnas(t, util, 78);
+    const anchos = anchosColumnas(paraMedir(doc, t), util, 78);
     const xs = anchos.reduce((a, w, i) => (a.push(i ? a[i-1] + anchos[i-1] : M), a), []);
     const filaCab = () => {
       const lin = t.columnas.map((c, ci) => partir(c, anchos[ci] - 2*PAD, negrita, TAM));
       const h = Math.max(...lin.map(l => l.length)) * LH + 2*PAD;
-      if(y - h < M + 20) nuevaPagina();
+      if(y - h - 22 < M + 14) nuevaPagina();   // el encabezado nunca se queda solo
       t.columnas.forEach((c, ci) => {
         pagina.drawRectangle({ x:xs[ci], y:y-h, width:anchos[ci], height:h, color:rgb(0.83,0.86,0.86), borderColor:gris, borderWidth:0.6 });
         lin[ci].forEach((l, k) => pagina.drawText(l, { x:xs[ci]+PAD, y:y-PAD-TAM-(k*LH)+1, size:TAM, font:negrita, color:tinta }));
@@ -2149,7 +2161,7 @@ async function ftPdfBytes(doc){
       y -= h;
     };
     if(t.titulo){
-      if(y - 40 < M) nuevaPagina();
+      if(y - 80 < M) nuevaPagina();   // título + encabezado + al menos una fila
       pagina.drawText(seguro(t.titulo), { x:M, y:y-12, size:11, font:negrita, color:tinta }); y -= 18;
     }
     filaCab();
