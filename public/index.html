@@ -541,6 +541,27 @@
   .dia-l .q{font-weight:700;margin-right:6px}
   .dia-l .imp{color:var(--sumi-soft);white-space:nowrap}
 
+  /* Foto → tabla rellenable */
+  .ft-foto{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .ft-foto img{max-height:120px;max-width:180px;border-radius:8px;border:1px solid var(--steel-2)}
+  .ft-tabla{border:1px solid var(--steel-2);border-radius:10px;padding:12px;margin:12px 0;background:#fff}
+  .ft-tabla .ft-th{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .ft-tabla .ft-th input{flex:1;padding:8px 10px;border:1px solid #9FB0B0;border-radius:6px;font:inherit;font-weight:700}
+  .ft-scroll{overflow:auto;max-height:46vh;border:1px solid var(--steel-2);border-radius:6px}
+  .ft-grid{border-collapse:collapse;width:100%;font-size:13px}
+  .ft-grid th{background:var(--steel);position:sticky;top:0;z-index:1;padding:4px;vertical-align:top}
+  .ft-grid th input{font-weight:700}
+  .ft-grid th label{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--frio);margin-top:4px;cursor:pointer;white-space:nowrap}
+  .ft-grid td{border-top:1px solid var(--steel-2);padding:2px}
+  .ft-grid input{width:100%;min-width:70px;border:1px solid transparent;border-radius:4px;padding:5px 6px;font:inherit;background:transparent}
+  .ft-grid input:focus{border-color:var(--frio);background:#fff;outline:none}
+  .ft-grid td.rell input{background:var(--frio-soft);color:var(--sumi-soft)}
+  .ft-grid .x{border:0;background:none;color:var(--sumi-soft);cursor:pointer;font-weight:700;padding:4px 6px}
+  .ft-acc{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .ft-acc button{border:1.5px dashed var(--steel-2);background:#fff;border-radius:6px;padding:7px 10px;font:inherit;font-size:12px;font-weight:600;color:var(--sumi-soft);cursor:pointer}
+  .ft-guardar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--sumi-soft)}
+  .ft-guardar select{padding:8px;border:1px solid #9FB0B0;border-radius:6px;font:inherit}
+
   /* Acceso */
   .auth{background:var(--steel)}
   .auth .hanko{border-color:var(--frio);color:var(--frio);background:#fff;box-shadow:none;transform:none;border-radius:12px}
@@ -625,7 +646,8 @@
   <div class="subfilters hidden" id="subfilters"></div>
   <div class="hoybar hidden" id="hoybar"></div>
   <div class="countrow"><div class="count" id="count"></div>
-    <span><button class="linkbtn hidden" id="histBtn">☰ Pedidos hechos</button>
+    <span><button class="linkbtn" id="ftBtn" style="margin-right:14px">▦ Foto → tabla rellenable</button>
+    <button class="linkbtn hidden" id="histBtn">☰ Pedidos hechos</button>
     <button class="linkbtn hidden" id="cpProvBtn" style="margin-left:14px">⇣ Importar proveedores de ComparaPrecios</button></span></div>
   <div class="grid" id="grid"></div>
 
@@ -820,6 +842,41 @@
       <button class="btn-ghost" id="pedCopiar">Copiar</button>
       <button class="btn-ghost" id="pedMail">Correo</button>
       <button class="btn-save btn-wa" id="pedWa">WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: foto → documento rellenable -->
+<div class="overlay" id="ftOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="ftTitle">
+    <div class="mhead">
+      <h2 id="ftTitle">Foto → tabla rellenable</h2>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div id="ftPaso1">
+        <p class="hint" style="margin-bottom:12px">Haz o elige una foto de una lista de productos, una tarifa o una hoja de pedido. La IA lee sus tablas y prepara un documento <b>Word</b> y un <b>PDF</b> con las casillas de precio para rellenar.</p>
+        <div class="ft-foto">
+          <input id="ftFile" type="file" accept="image/*" class="filein">
+          <label for="ftFile" class="filebtn small" style="flex:1"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg><span id="ftFileTxt">Hacer o elegir foto</span></label>
+          <img id="ftPrev" class="hidden" alt="">
+        </div>
+        <div class="hint" id="ftErr" style="color:var(--shu);margin-top:10px"></div>
+      </div>
+      <div id="ftPaso2" class="hidden">
+        <div class="field"><label for="ftDocTitle">Título del documento</label><input id="ftDocTitle" type="text" maxlength="200"></div>
+        <div class="hint">Revisa lo leído: puedes corregir celdas, añadir o quitar filas y columnas, y marcar qué columnas son <b>para rellenar</b>.</div>
+        <div id="ftTablas"></div>
+        <div class="ft-guardar">Guardar el PDF también como ficha en
+          <select id="ftCat"></select>
+          <button type="button" class="btn-ghost" id="ftSave">Guardar en la Biblioteca</button></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-ghost" id="ftOtra" style="margin-right:auto" hidden>Otra foto</button>
+      <button class="btn-save" id="ftLeer" disabled>Leer tabla</button>
+      <button class="btn-ghost web-only hidden" id="ftWord">Descargar Word</button>
+      <button class="btn-save web-only hidden" id="ftPdf">Descargar PDF</button>
     </div>
   </div>
 </div>
@@ -1865,6 +1922,291 @@ function syncFileUi(){
     ? `Máximo ${MAX_MB} MB. Las fotos grandes se reducen solas antes de subirlas.`
     : `Máximo ${MAX_MB} MB por archivo. Puedes elegir varios a la vez: se crea una ficha por cada uno.`;
 }
+/* ==================== FOTO → DOCUMENTO RELLENABLE (Word y PDF) ====================
+   La foto se reduce en el navegador y el lector (worker) la pasa a la IA, que devuelve las tablas.
+   Se revisan aquí y se generan en el propio navegador:
+   · Word (.docx): tabla con un control de contenido de texto en cada casilla de precio.
+   · PDF: tabla con un campo de formulario en cada casilla de precio. */
+let FT = null;   // { foto:{data,tipo,url}, doc:{titulo, tablas:[{titulo, columnas, rellenar, filas}]} }
+const cargarScript = (() => { const hechos = {}; return url => hechos[url] || (hechos[url] = new Promise((ok, mal) => {
+  const sc = document.createElement("script"); sc.src = url; sc.onload = ok; sc.onerror = () => { delete hechos[url]; mal(new AvisoUsuario("No se pudo cargar una librería. Revisa la conexión.")); };
+  document.head.appendChild(sc);
+})); })();
+const PDFLIB_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js";
+const JSZIP_URL  = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+
+function abrirFotoTabla(){
+  FT = { foto:null, doc:null };
+  $("ftFile").value = ""; $("ftFileTxt").textContent = "Hacer o elegir foto";
+  $("ftPrev").classList.add("hidden"); $("ftErr").textContent = "";
+  $("ftPaso1").classList.remove("hidden"); $("ftPaso2").classList.add("hidden");
+  $("ftLeer").classList.remove("hidden"); $("ftLeer").disabled = true; $("ftLeer").textContent = "Leer tabla";
+  ["ftWord","ftPdf"].forEach(id => $(id).classList.add("hidden")); $("ftOtra").hidden = true;
+  $("ftCat").innerHTML = CATS.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  $("ftCat").value = activeCat !== "todas" && CATS.some(c => c.id === activeCat) ? activeCat : "proveedores";
+  show("ftOverlay");
+}
+async function ftElegirFoto(){
+  const f = $("ftFile").files[0]; if(!f) return;
+  $("ftErr").textContent = "";
+  try{
+    const bmp = await createImageBitmap(f);
+    const k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+    const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    if(bmp.close) bmp.close();
+    const url = c.toDataURL("image/jpeg", 0.85);
+    FT.foto = { data:url, tipo:"image/jpeg" };
+    $("ftPrev").src = url; $("ftPrev").classList.remove("hidden");
+    $("ftFileTxt").textContent = f.name || "Foto elegida";
+    $("ftLeer").disabled = false;
+  }catch(e){ $("ftErr").textContent = "No se pudo abrir esa imagen. Prueba con otra (JPG o PNG)."; }
+}
+async function ftLeer(){
+  if(!FT.foto) return;
+  const b = $("ftLeer"); b.disabled = true; b.textContent = "Leyendo la foto…"; $("ftErr").textContent = "";
+  try{
+    const r = await llamarLector("/tabla", { imagen:FT.foto.data, tipo:FT.foto.tipo });
+    FT.doc = r.documento;
+    ftMostrarEditor();
+  }catch(e){
+    $("ftErr").textContent = e instanceof AvisoUsuario ? e.message : "No se pudo leer la foto.";
+    b.disabled = false; b.textContent = "Leer tabla";
+  }
+}
+function ftMostrarEditor(){
+  $("ftPaso1").classList.add("hidden"); $("ftPaso2").classList.remove("hidden");
+  $("ftLeer").classList.add("hidden"); $("ftOtra").hidden = false;
+  ["ftWord","ftPdf"].forEach(id => $(id).classList.remove("hidden"));
+  $("ftDocTitle").value = FT.doc.titulo;
+  ftPintarTablas();
+}
+function ftPintarTablas(){
+  const cont = $("ftTablas");
+  cont.innerHTML = FT.doc.tablas.map((t, ti) => `<div class="ft-tabla" data-t="${ti}">
+    <div class="ft-th"><input data-k="titulo" value="${escapeHtml(t.titulo)}" placeholder="Título de la tabla (opcional)">
+      ${FT.doc.tablas.length > 1 ? `<button type="button" class="x" data-quitar-tabla title="Quitar tabla">✕</button>` : ""}</div>
+    <div class="ft-scroll"><table class="ft-grid"><thead><tr>
+      ${t.columnas.map((c, ci) => `<th><input data-col="${ci}" value="${escapeHtml(c)}">
+        <label><input type="checkbox" data-rell="${ci}" ${t.rellenar.includes(ci) ? "checked" : ""} style="width:auto;min-width:0"> para rellenar</label>
+        ${t.columnas.length > 1 ? `<button type="button" class="x" data-quitar-col="${ci}" title="Quitar columna">✕ col.</button>` : ""}</th>`).join("")}
+      <th></th></tr></thead><tbody>
+      ${t.filas.map((f, ri) => `<tr>${f.map((v, ci) => t.rellenar.includes(ci)
+          ? `<td class="rell"><input disabled placeholder="(casilla)"></td>`
+          : `<td><input data-r="${ri}" data-c="${ci}" value="${escapeHtml(v)}"></td>`).join("")}
+        <td><button type="button" class="x" data-quitar-fila="${ri}" title="Quitar fila">✕</button></td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="ft-acc"><button type="button" data-mas-fila>+ Fila</button><button type="button" data-mas-col>+ Columna</button>
+      <span class="hint" style="align-self:center">${t.filas.length} fila${t.filas.length===1?"":"s"}</span></div>
+  </div>`).join("");
+  cont.querySelectorAll(".ft-tabla").forEach(box => {
+    const t = FT.doc.tablas[+box.dataset.t];
+    box.querySelector('[data-k="titulo"]').addEventListener("input", e => t.titulo = e.target.value);
+    box.querySelectorAll("[data-col]").forEach(i => i.addEventListener("input", () => t.columnas[+i.dataset.col] = i.value));
+    box.querySelectorAll("[data-r]").forEach(i => i.addEventListener("input", () => t.filas[+i.dataset.r][+i.dataset.c] = i.value));
+    box.querySelectorAll("[data-rell]").forEach(c => c.addEventListener("change", () => {
+      const ci = +c.dataset.rell;
+      t.rellenar = c.checked ? [...t.rellenar, ci].sort((a,b)=>a-b) : t.rellenar.filter(x => x !== ci);
+      ftPintarTablas();
+    }));
+    box.querySelectorAll("[data-quitar-fila]").forEach(b => b.addEventListener("click", () => { t.filas.splice(+b.dataset.quitarFila, 1); ftPintarTablas(); }));
+    box.querySelectorAll("[data-quitar-col]").forEach(b => b.addEventListener("click", () => {
+      const ci = +b.dataset.quitarCol;
+      t.columnas.splice(ci, 1); t.filas.forEach(f => f.splice(ci, 1));
+      t.rellenar = t.rellenar.filter(x => x !== ci).map(x => x > ci ? x - 1 : x);
+      ftPintarTablas();
+    }));
+    box.querySelector("[data-mas-fila]").addEventListener("click", () => {
+      t.filas.push(t.columnas.map(() => "")); ftPintarTablas();
+      const nuevo = $("ftTablas").querySelectorAll(`.ft-tabla[data-t="${box.dataset.t}"] tbody tr:last-child input:not([disabled])`)[0]; if(nuevo) nuevo.focus();
+    });
+    box.querySelector("[data-mas-col]").addEventListener("click", () => {
+      t.columnas.push("Nueva"); t.filas.forEach(f => f.push("")); ftPintarTablas();
+    });
+    const qt = box.querySelector("[data-quitar-tabla]");
+    if(qt) qt.addEventListener("click", () => { FT.doc.tablas.splice(+box.dataset.t, 1); ftPintarTablas(); });
+  });
+}
+// Documento listo para exportar: sin filas vacías y con título.
+function ftDocumento(){
+  const titulo = $("ftDocTitle").value.trim() || "Documento";
+  const tablas = FT.doc.tablas.map(t => ({ ...t, filas: t.filas.filter(f => f.some((v, ci) => !t.rellenar.includes(ci) && String(v).trim())) }))
+    .filter(t => t.filas.length && t.columnas.length);
+  if(!tablas.length) throw new AvisoUsuario("No queda ninguna fila con datos.");
+  return { titulo, tablas };
+}
+const nombreArchivo = t => (t.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\w\- ]+/g,"").trim().replace(/\s+/g,"-").slice(0,60) || "documento").toLowerCase();
+const subtituloDoc = () => `${activeCentro === "todos" ? "Cocina" : centroName(activeCentro)} · ${new Date().toLocaleDateString("es-ES", { day:"numeric", month:"long", year:"numeric" })}`;
+function descargarBlob(blob, nombre){
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+// Anchos de columna (en proporción): las de rellenar fijas; el resto según el texto más largo.
+function anchosColumnas(t, total, anchoRell){
+  const fijas = t.rellenar.length * anchoRell, libre = Math.max(total - fijas, total * 0.4);
+  const pesos = t.columnas.map((c, ci) => t.rellenar.includes(ci) ? 0
+    : Math.min(40, Math.max(6, String(c).length, ...t.filas.map(f => String(f[ci]||"").length))));
+  const suma = pesos.reduce((a,b)=>a+b, 0) || 1;
+  return t.columnas.map((c, ci) => t.rellenar.includes(ci) ? anchoRell : libre * pesos[ci] / suma);
+}
+
+/* ---- Word (.docx) ---- */
+async function ftWord(){
+  let doc; try{ doc = ftDocumento(); }catch(e){ alert(e.message); return; }
+  const b = $("ftWord"); b.disabled = true;
+  try{
+    await cargarScript(JSZIP_URL);
+    const x = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    const apaisado = doc.tablas.some(t => t.columnas.length > 5);
+    const W = apaisado ? 16838 : 11906, H = apaisado ? 11906 : 16838, M = 1000, util = W - 2*M;
+    const run = (txt, o = {}) => `<w:r><w:rPr>${o.b ? "<w:b/>" : ""}${o.color ? `<w:color w:val="${o.color}"/>` : ""}<w:sz w:val="${o.sz||20}"/></w:rPr><w:t xml:space="preserve">${x(txt)}</w:t></w:r>`;
+    const par = (contenido, o = {}) => `<w:p><w:pPr>${o.esp ? `<w:spacing w:after="${o.esp}"/>` : `<w:spacing w:after="0"/>`}${o.al ? `<w:jc w:val="${o.al}"/>` : ""}</w:pPr>${contenido}</w:p>`;
+    let id = 1;
+    const tabla = t => {
+      const anchos = anchosColumnas(t, util, 1500).map(Math.round);
+      const borde = `<w:top w:val="single" w:sz="4" w:color="9FB0B0"/><w:left w:val="single" w:sz="4" w:color="9FB0B0"/><w:bottom w:val="single" w:sz="4" w:color="9FB0B0"/><w:right w:val="single" w:sz="4" w:color="9FB0B0"/><w:insideH w:val="single" w:sz="4" w:color="9FB0B0"/><w:insideV w:val="single" w:sz="4" w:color="9FB0B0"/>`;
+      const celda = (contenido, w, o = {}) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.fondo ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fondo}"/>` : ""}<w:vAlign w:val="center"/></w:tcPr>${contenido}</w:tc>`;
+      const cab = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${t.columnas.map((c, ci) => celda(par(run(c, { b:true, sz:18 })), anchos[ci], { fondo:"D3DCDC" })).join("")}</w:tr>`;
+      const filas = t.filas.map(f => `<w:tr><w:trPr><w:trHeight w:val="400"/></w:trPr>${f.map((v, ci) => t.rellenar.includes(ci)
+        ? celda(`<w:sdt><w:sdtPr><w:alias w:val="${x(t.columnas[ci] || "Precio")}"/><w:tag w:val="campo${id}"/><w:id w:val="${id++}"/><w:text/></w:sdtPr><w:sdtContent>${par(run(" ", { sz:20 }))}</w:sdtContent></w:sdt>`, anchos[ci], { fondo:"EEF6F6" })
+        : celda(par(run(v, { sz:20 })), anchos[ci])).join("")}</w:tr>`).join("");
+      return (t.titulo ? par(run(t.titulo, { b:true, sz:24 }), { esp:80 }) : "") +
+        `<w:tbl><w:tblPr><w:tblW w:w="${util}" w:type="dxa"/><w:tblBorders>${borde}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr>` +
+        `<w:tblGrid>${anchos.map(a => `<w:gridCol w:w="${a}"/>`).join("")}</w:tblGrid>${cab}${filas}</w:tbl>` + par("", { esp:200 });
+    };
+    const cuerpo = par(run(doc.titulo, { b:true, sz:32 }), { esp:40 }) + par(run(subtituloDoc(), { sz:18, color:"4A6164" }), { esp:240 }) +
+      doc.tablas.map(tabla).join("") +
+      par(run("Generado desde una foto con la Biblioteca. Las casillas sombreadas son para rellenar.", { sz:16, color:"4A6164" }));
+    const documento = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${cuerpo}<w:sectPr><w:pgSz w:w="${W}" w:h="${H}"${apaisado ? ` w:orient="landscape"` : ""}/><w:pgMar w:top="${M}" w:right="${M}" w:bottom="${M}" w:left="${M}" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+    const estilos = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="20"/><w:lang w:val="es-ES"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>`;
+    const zip = new JSZip();
+    zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`);
+    zip.file("_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+    zip.file("word/_rels/document.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+    zip.file("word/document.xml", documento);
+    zip.file("word/styles.xml", estilos);
+    const blob = await zip.generateAsync({ type:"blob", mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+    descargarBlob(blob, nombreArchivo(doc.titulo) + ".docx");
+    toast("Word descargado");
+  }catch(e){ alert(e instanceof AvisoUsuario ? e.message : "No se pudo generar el Word."); console.error(e); }
+  finally{ b.disabled = false; }
+}
+
+/* ---- PDF con campos rellenables ---- */
+async function ftPdfBytes(doc){
+  await cargarScript(PDFLIB_URL);
+  const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(doc.titulo); pdf.setCreator("Biblioteca de cocina");
+  const fuente = await pdf.embedFont(StandardFonts.Helvetica), negrita = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const form = pdf.getForm();
+  // Helvetica solo sabe escribir caracteres de Windows-1252: el resto se cambia por "?".
+  const seguro = s => [...String(s ?? "")].map(ch => { try{ fuente.encodeText(ch); return ch; }catch(_){ return "?"; } }).join("");
+  const partir = (txt, ancho, f, tam) => {
+    const lineas = [];
+    String(seguro(txt)).split(/\n/).forEach(par => {
+      let l = "";
+      par.split(/\s+/).forEach(pal => {
+        const prueba = l ? l + " " + pal : pal;
+        if(f.widthOfTextAtSize(prueba, tam) <= ancho) l = prueba;
+        else { if(l) lineas.push(l); l = pal; while(f.widthOfTextAtSize(l, tam) > ancho && l.length > 1){ let k = l.length; while(k > 1 && f.widthOfTextAtSize(l.slice(0,k), tam) > ancho) k--; lineas.push(l.slice(0,k)); l = l.slice(k); } }
+      });
+      lineas.push(l);
+    });
+    return lineas.length ? lineas : [""];
+  };
+  const apaisado = doc.tablas.some(t => t.columnas.length > 5);
+  const [PW, PH] = apaisado ? [842, 595] : [595, 842];
+  const M = 36, util = PW - 2*M, TAM = 9, LH = 11, PAD = 4;
+  const gris = rgb(0.62, 0.69, 0.69), tinta = rgb(0.05, 0.11, 0.12), suave = rgb(0.29, 0.38, 0.39);
+  let pagina, y, nPag = 0, nCampo = 0;
+  const nuevaPagina = () => {
+    pagina = pdf.addPage([PW, PH]); nPag++; y = PH - M;
+    pagina.drawText(seguro(`${doc.titulo} · página ${nPag}`), { x:M, y:18, size:7, font:fuente, color:suave });
+  };
+  nuevaPagina();
+  pagina.drawText(seguro(doc.titulo), { x:M, y:y-16, size:16, font:negrita, color:tinta }); y -= 22;
+  pagina.drawText(seguro(subtituloDoc()), { x:M, y:y-10, size:9, font:fuente, color:suave }); y -= 26;
+
+  for(const t of doc.tablas){
+    const anchos = anchosColumnas(t, util, 78);
+    const xs = anchos.reduce((a, w, i) => (a.push(i ? a[i-1] + anchos[i-1] : M), a), []);
+    const filaCab = () => {
+      const lin = t.columnas.map((c, ci) => partir(c, anchos[ci] - 2*PAD, negrita, TAM));
+      const h = Math.max(...lin.map(l => l.length)) * LH + 2*PAD;
+      if(y - h < M + 20) nuevaPagina();
+      t.columnas.forEach((c, ci) => {
+        pagina.drawRectangle({ x:xs[ci], y:y-h, width:anchos[ci], height:h, color:rgb(0.83,0.86,0.86), borderColor:gris, borderWidth:0.6 });
+        lin[ci].forEach((l, k) => pagina.drawText(l, { x:xs[ci]+PAD, y:y-PAD-TAM-(k*LH)+1, size:TAM, font:negrita, color:tinta }));
+      });
+      y -= h;
+    };
+    if(t.titulo){
+      if(y - 40 < M) nuevaPagina();
+      pagina.drawText(seguro(t.titulo), { x:M, y:y-12, size:11, font:negrita, color:tinta }); y -= 18;
+    }
+    filaCab();
+    t.filas.forEach(f => {
+      const lin = f.map((v, ci) => t.rellenar.includes(ci) ? [""] : partir(v, anchos[ci] - 2*PAD, fuente, TAM));
+      const h = Math.max(20, Math.max(...lin.map(l => l.length)) * LH + 2*PAD);
+      if(y - h < M + 14){ nuevaPagina(); filaCab(); }
+      f.forEach((v, ci) => {
+        pagina.drawRectangle({ x:xs[ci], y:y-h, width:anchos[ci], height:h, borderColor:gris, borderWidth:0.6,
+          color: t.rellenar.includes(ci) ? rgb(0.93,0.96,0.96) : undefined });
+        if(t.rellenar.includes(ci)){
+          const campo = form.createTextField(`c${++nCampo}`);
+          campo.addToPage(pagina, { x:xs[ci]+1.5, y:y-h+1.5, width:anchos[ci]-3, height:h-3, font:fuente, borderWidth:0, backgroundColor:rgb(0.93,0.96,0.96) });
+          campo.setFontSize(TAM + 1);
+        }else lin[ci].forEach((l, k) => pagina.drawText(l, { x:xs[ci]+PAD, y:y-PAD-TAM-(k*LH)+1, size:TAM, font:fuente, color:tinta }));
+      });
+      y -= h;
+    });
+    y -= 16;
+  }
+  return pdf.save();
+}
+async function ftPdf(){
+  let doc; try{ doc = ftDocumento(); }catch(e){ alert(e.message); return; }
+  const b = $("ftPdf"); b.disabled = true;
+  try{
+    const bytes = await ftPdfBytes(doc);
+    descargarBlob(new Blob([bytes], { type:"application/pdf" }), nombreArchivo(doc.titulo) + ".pdf");
+    toast("PDF descargado");
+  }catch(e){ alert(e instanceof AvisoUsuario ? e.message : "No se pudo generar el PDF."); console.error(e); }
+  finally{ b.disabled = false; }
+}
+// Guarda el PDF rellenable como ficha (así se puede abrir desde cualquier dispositivo).
+async function ftGuardar(){
+  let doc; try{ doc = ftDocumento(); }catch(e){ alert(e.message); return; }
+  if(!navigator.onLine){ alert("Necesitas conexión para guardar en la Biblioteca."); return; }
+  const b = $("ftSave"); b.disabled = true; b.textContent = "Guardando…";
+  let path = null;
+  try{
+    const bytes = await ftPdfBytes(doc);
+    const nombre = nombreArchivo(doc.titulo) + ".pdf";
+    const file = new File([bytes], nombre, { type:"application/pdf" });
+    path = `archivos/${Date.now()}_${nombre}`;
+    await subir(path, file, pct => { b.textContent = `Subiendo… ${pct}%`; });
+    const cat = $("ftCat").value;
+    const data = { title:doc.titulo.slice(0,200), cat, centro: activeCentro !== "todos" ? activeCentro : CENTRO_FICHAS_ANTIGUAS,
+      tags:["rellenable"], desc:"Documento con casillas de precio generado desde una foto.",
+      filePath:path, fileName:nombre, fileType:"application/pdf", fileSize:file.size, createdAt:serverTimestamp() };
+    const w = addDoc(collection(db, COL), data); w.catch(()=>{});
+    await Promise.race([ w, sleep(8000) ]);
+    toast("Guardado en la Biblioteca");
+  }catch(e){
+    if(path) borrarArchivo(path);
+    alert(e instanceof AvisoUsuario ? e.message : "No se pudo guardar.");
+  }finally{ b.disabled = false; b.textContent = "Guardar en la Biblioteca"; }
+}
+
 /* ==================== COPIA DE SEGURIDAD ====================
    Descarga un .json con todas las fichas (datos, productos, recetas y la ruta de cada
    archivo). Los archivos en sí siguen en Firebase Storage. */
@@ -3272,7 +3614,7 @@ function closeOverlay(id){
   if(id==="impOverlay"){ IMP.editId = null; }
   if(id==="cpOverlay" && CP && !$("cpLogin").classList.contains("hidden")) CP.after = null;
 }
-function closeAllOverlays(){ ["cpOverlay","cpProvOverlay","pedOverlay","histOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
+function closeAllOverlays(){ ["cpOverlay","cpProvOverlay","pedOverlay","histOverlay","ftOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
 // Cerrar pinchando fuera solo si el clic EMPIEZA y TERMINA fuera del recuadro
 // (al seleccionar texto y soltar el ratón fuera no se cierra). Los formularios no se cierran pinchando fuera.
@@ -3327,6 +3669,14 @@ $("cpOpen").addEventListener("click", cpOpen);
 $("cpAllBtn").addEventListener("click", cpActualizarTodos);
 $("cpProvBtn").addEventListener("click", cpImportarProveedores);
 $("histBtn").addEventListener("click", () => abrirHistorial());
+$("ftBtn").addEventListener("click", abrirFotoTabla);
+$("ftFile").addEventListener("change", ftElegirFoto);
+$("ftLeer").addEventListener("click", ftLeer);
+$("ftOtra").addEventListener("click", abrirFotoTabla);
+$("ftWord").addEventListener("click", ftWord);
+$("ftPdf").addEventListener("click", ftPdf);
+$("ftSave").addEventListener("click", ftGuardar);
+$("ftDocTitle").addEventListener("input", e => { if(FT && FT.doc) FT.doc.titulo = e.target.value; });
 $("histProv").addEventListener("change", () => { HIST_ABIERTO = null; renderHist(); });
 $("histVista").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
   HIST_VISTA = b.dataset.v; try{ localStorage.setItem("bib.histVista", HIST_VISTA); }catch(e){}

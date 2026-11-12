@@ -6,6 +6,9 @@
 //   GET  /estado   → { ok, ia }            (sin sesión: solo dice si la IA está configurada)
 //   POST /extraer  { url, ia }             → { receta, metodo, aviso }  |  { receta:null, texto, meta }
 //   POST /texto    { texto }               → { receta, metodo:"ia" }   (solo con IA)
+//   POST /tabla    { imagen, tipo }        → { documento:{ titulo, tablas:[{ titulo, columnas, rellenar, filas }] } }
+//                                            Lee las tablas de una foto (lista de productos, tarifa, hoja de
+//                                            pedido…) para montar un documento con casillas de precio (solo con IA)
 //
 // Solo atiende a cuentas de la lista "permitidos" de Firestore: la app manda el token de la sesión
 // y aquí se comprueba preguntando a Firestore con ese mismo token.
@@ -48,6 +51,7 @@ export default {
       const body = await req.json().catch(() => ({}));
       if (ruta === "/extraer") return json(await extraer(body, env));
       if (ruta === "/texto") return json(await desdeTexto(body, env));
+      if (ruta === "/tabla") return json(await tablaDesdeFoto(body, env));
       return json({ error: "No encontrado" }, 404);
     } catch (e) {
       const status = e instanceof Aviso ? e.status : 500;
@@ -494,4 +498,88 @@ async function conIA(env, contenido, modo) {
   if (CATEGORIAS.includes(o.categoria)) r.categoria = o.categoria;
   if (!r.ingredientes.length) throw new Aviso("No se han encontrado ingredientes en ese texto.");
   return r;
+}
+
+
+/* ==================== FOTO → TABLA RELLENABLE ==================== */
+const MAX_IMAGEN = 5 * 1024 * 1024;   // base64 ya reducido en el navegador
+const TIPOS_IMAGEN = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+async function tablaDesdeFoto({ imagen, tipo } = {}, env) {
+  if (!env.ANTHROPIC_API_KEY) throw new Aviso("Para leer fotos hace falta activar la IA del lector (secreto ANTHROPIC_API_KEY en Cloudflare).");
+  const datos = String(imagen || "").replace(/^data:[^,]*,/, "");
+  if (!datos) throw new Aviso("Falta la foto.");
+  if (datos.length > MAX_IMAGEN * 1.37) throw new Aviso("La foto es demasiado grande. Prueba con otra o recórtala.");
+  const media = TIPOS_IMAGEN.includes(tipo) ? tipo : "image/jpeg";
+
+  const instr = `En la foto hay una o varias tablas o listas (de productos, una tarifa, una hoja de pedido, un inventario…).
+Transcríbelas para hacer un documento en el que se puedan escribir los PRECIOS a mano o en el ordenador.
+Devuelve SOLO este JSON:
+{
+  "titulo": "título del documento: el que se lea en la foto o uno breve y descriptivo",
+  "tablas": [
+    {
+      "titulo": "título o sección de la tabla, o \"\" si no tiene",
+      "columnas": ["Producto", "Formato", "Precio"],
+      "rellenar": [2],
+      "filas": [["Aceite de oliva virgen extra", "Garrafa 5 L", ""]]
+    }
+  ]
+}
+Normas:
+- Copia el texto de cada fila tal cual se lee (corrige solo erratas evidentes). No inventes filas ni productos.
+- Mantén las columnas que tenga la tabla. Si una celda está vacía o no se lee, pon "".
+- Las columnas de precio (precio, importe, €, PVP, coste, total…) van VACÍAS en todas las filas aunque en la foto tengan números, y sus índices (empezando en 0) van en "rellenar".
+- Si ninguna columna es de precio, añade al final una columna "Precio" vacía y pon su índice en "rellenar".
+- Todas las filas deben tener el mismo número de celdas que "columnas".
+- Si hay varias tablas o secciones claramente separadas, devuélvelas por separado y en el orden de la foto.
+- Español de España. Si la foto no contiene ninguna tabla ni lista, responde {"error":"sin tabla"}.`;
+
+  let res;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: env.MODELO_VISION || env.MODELO || "claude-haiku-5-5",
+        max_tokens: 8000,
+        system: "Transcribes tablas de fotos para documentos de cocina profesional. Respondes SOLO con un objeto JSON válido, sin texto antes ni después.",
+        messages: [{ role: "user", content: [
+          { type: "image", source: { type: "base64", media_type: media, data: datos } },
+          { type: "text", text: instr },
+        ] }],
+      }),
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch { throw new Aviso("La IA no ha respondido a tiempo. Prueba otra vez.", 504); }
+  if (res.status === 401) throw new Aviso("La clave de la IA no es válida. Revísala en Cloudflare.", 502);
+  if (res.status === 429 || res.status === 529) throw new Aviso("La IA está saturada. Prueba en un minuto.", 503);
+  if (!res.ok) throw new Aviso(`La IA ha devuelto un error (${res.status}).`, 502);
+  const data = await res.json();
+  const txt = (data.content || []).map(c => c.text || "").join("");
+  let o;
+  try { o = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1)); }
+  catch { throw new Aviso("No se ha podido leer la tabla de la foto. Prueba con una foto más nítida y recta.", 502); }
+  if (o.error) throw new Aviso("En la foto no se ha encontrado ninguna tabla ni lista.");
+  return { documento: normalizarDocumento(o) };
+}
+
+function normalizarDocumento(o) {
+  const celda = v => recortar(limpiar(String(v ?? "")), 300);
+  const tablas = (Array.isArray(o.tablas) ? o.tablas : []).slice(0, 20).map(t => {
+    let columnas = (Array.isArray(t.columnas) ? t.columnas : []).map(celda).slice(0, 12);
+    let filas = (Array.isArray(t.filas) ? t.filas : []).slice(0, 400)
+      .map(f => (Array.isArray(f) ? f : [f]).map(celda))
+      .filter(f => f.some(Boolean));
+    const ancho = Math.max(columnas.length, ...filas.map(f => f.length), 1);
+    while (columnas.length < ancho) columnas.push(columnas.length ? "" : "Producto");
+    filas = filas.map(f => { const g = f.slice(0, ancho); while (g.length < ancho) g.push(""); return g; });
+    let rellenar = [...new Set((Array.isArray(t.rellenar) ? t.rellenar : []).map(Number))]
+      .filter(i => Number.isInteger(i) && i >= 0 && i < ancho);
+    if (!rellenar.length) { columnas.push("Precio"); filas.forEach(f => f.push("")); rellenar = [columnas.length - 1]; }
+    rellenar.forEach(i => filas.forEach(f => { f[i] = ""; }));
+    return { titulo: celda(t.titulo), columnas, rellenar, filas };
+  }).filter(t => t.filas.length);
+  if (!tablas.length) throw new Aviso("En la foto no se ha encontrado ninguna tabla ni lista.");
+  return { titulo: celda(o.titulo) || "Documento", tablas };
 }
