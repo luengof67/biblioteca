@@ -964,6 +964,27 @@
   </div>
 </div>
 
+<!-- Modal: compartir páginas sueltas de un libro (va después del visor para quedar encima) -->
+<div class="overlay" id="shareOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <div class="mhead">
+      <h2 id="shareTitle">Compartir páginas</h2>
+      <button class="close" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <p class="hint" style="margin-bottom:12px">Los libros no se comparten enteros: elige las hojas sueltas que quieres enviar.</p>
+      <div class="field"><label for="sharePags">Páginas <span id="shareTotal"></span></label>
+        <input id="sharePags" type="text" inputmode="numeric" placeholder="Ej. 12-15, 20"></div>
+      <div class="hint" id="shareInfo"></div>
+      <div class="hint" id="shareErr" style="color:var(--shu)"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-ghost" data-close>Cancelar</button>
+      <button class="btn-save" id="shareGo">Compartir</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
@@ -1483,6 +1504,93 @@ function descargar(){
   document.body.appendChild(a); a.click(); a.remove();
 }
 
+/* ==================== COMPARTIR ====================
+   Menús, catálogos, fichas, tarifas…: se comparte el archivo tal cual.
+   Libros: solo páginas sueltas (se monta un PDF nuevo con las elegidas). */
+const MAX_HOJAS = 20;          // páginas de un libro por envío
+const MAX_MB_MOVIL = 30;       // en la app Android el archivo pasa por memoria
+function fichaActual(){ return VS && DOCS.find(x => x.id === VS.docId); }
+async function blobActual(){
+  if(!VS || !VS.url) throw new AvisoUsuario("El archivo aún se está cargando. Espera un momento.");
+  return (await fetch(VS.url)).blob();
+}
+const blobBase64 = blob => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(blob); });
+async function compartirArchivo(blob, nombre, titulo){
+  nombre = nombre.replace(/[\\/:*?"<>|]+/g, " ").trim() || "documento";
+  if(IS_NATIVE){
+    const P = window.Capacitor.Plugins || {};
+    if(!P.Share || !P.Filesystem) throw new AvisoUsuario("Para compartir hace falta la última versión de la app. Instala el APK nuevo.");
+    if(blob.size > MAX_MB_MOVIL*1024*1024) throw new AvisoUsuario(`El archivo pesa ${(blob.size/1048576).toFixed(0)} MB, demasiado para compartirlo desde el móvil. Hazlo desde el ordenador.`);
+    const w = await P.Filesystem.writeFile({ path:`compartir/${nombre}`, data: await blobBase64(blob), directory:"CACHE", recursive:true });
+    try{ await P.Share.share({ title:titulo, dialogTitle:"Compartir", files:[w.uri] }); }
+    catch(e){ if(!/cancel/i.test(String(e && e.message))) throw e; }
+    return;
+  }
+  const file = new File([blob], nombre, { type: blob.type || "application/octet-stream" });
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    try{ await navigator.share({ files:[file], title:titulo }); return; }
+    catch(e){ if(e.name === "AbortError") return; /* si el navegador no deja, se descarga */ }
+  }
+  descargarBlob(blob, nombre);
+  toast("Descargado. Adjúntalo en WhatsApp o en el correo.");
+}
+async function compartir(){
+  const d = fichaActual(); if(!d) return;
+  const meta = VS.file || d;
+  try{
+    // Libro en PDF: solo páginas sueltas.
+    if(d.cat === "libros" && !VS.file && !isImg(meta)){ abrirCompartirPaginas(d); return; }
+    const blob = await blobActual();
+    await compartirArchivo(blob, meta.fileName || d.title, d.title);
+  }catch(e){ alert(e instanceof AvisoUsuario ? e.message : "No se pudo compartir el archivo."); }
+}
+function abrirCompartirPaginas(d){
+  const n = VS.pdf ? VS.pdf.numPages : 0;
+  if(!n){ alert("El libro aún se está cargando. Espera un momento."); return; }
+  const actual = parseInt(($("pdfCounter") && $("pdfCounter").textContent) || "1", 10) || 1;
+  $("shareTotal").textContent = `(el libro tiene ${n})`;
+  $("sharePags").value = String(actual);
+  $("shareInfo").textContent = `Puedes poner páginas sueltas y tramos, separados por comas. Máximo ${MAX_HOJAS} páginas por envío.`;
+  $("shareErr").textContent = "";
+  show("shareOverlay");
+  setTimeout(() => $("sharePags").select(), 60);
+}
+// "12-15, 20" -> [12,13,14,15,20]
+function leerPaginas(txt, n){
+  const pags = [];
+  for(const parte of String(txt).split(/[,;\s]+/).filter(Boolean)){
+    const m = /^(\d+)(?:\s*-\s*(\d+))?$/.exec(parte);
+    if(!m) throw new AvisoUsuario(`No entiendo «${parte}». Escribe por ejemplo: 12-15, 20`);
+    let a = +m[1], b = m[2] ? +m[2] : a; if(b < a) [a, b] = [b, a];
+    if(a < 1 || b > n) throw new AvisoUsuario(`El libro tiene ${n} páginas.`);
+    for(let i = a; i <= b; i++) if(!pags.includes(i)) pags.push(i);
+    if(pags.length > MAX_HOJAS) throw new AvisoUsuario(`Máximo ${MAX_HOJAS} páginas por envío.`);
+  }
+  if(!pags.length) throw new AvisoUsuario("Escribe qué páginas quieres compartir.");
+  return pags.sort((x, y) => x - y);
+}
+const resumenPaginas = p => { const r = []; for(let i = 0; i < p.length; i++){ let j = i; while(p[j+1] === p[j] + 1) j++; r.push(j > i ? `${p[i]}-${p[j]}` : `${p[i]}`); i = j; } return r.join("_"); };
+async function compartirPaginas(){
+  const d = fichaActual(); if(!d || !VS.pdf) return;
+  const b = $("shareGo"); $("shareErr").textContent = "";
+  let pags;
+  try{ pags = leerPaginas($("sharePags").value, VS.pdf.numPages); }
+  catch(e){ $("shareErr").textContent = e.message; return; }
+  b.disabled = true; b.textContent = "Preparando…";
+  try{
+    await cargarScript(PDFLIB_URL);
+    const origen = await window.PDFLib.PDFDocument.load(await (await blobActual()).arrayBuffer(), { ignoreEncryption:true });
+    const nuevo = await window.PDFLib.PDFDocument.create();
+    nuevo.setTitle(`${d.title} · pág. ${resumenPaginas(pags).replace(/_/g, ", ")}`);
+    (await nuevo.copyPages(origen, pags.map(p => p - 1))).forEach(pg => nuevo.addPage(pg));
+    const blob = new Blob([await nuevo.save()], { type:"application/pdf" });
+    closeOverlay("shareOverlay");
+    await compartirArchivo(blob, `${d.title} - pag ${resumenPaginas(pags)}.pdf`, d.title);
+  }catch(e){
+    $("shareErr").textContent = e instanceof AvisoUsuario ? e.message : "No se pudieron extraer esas páginas de este PDF.";
+  }finally{ b.disabled = false; b.textContent = "Compartir"; }
+}
+
 /* ==================== IMPRESIÓN ==================== */
 function printHeadHtml(subtitulo){
   const fecha = new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
@@ -1632,6 +1740,7 @@ const ICO = {
   clock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
   euro:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 7a6 6 0 1 0 0 10M4 10h10M4 14h10"/></svg>`,
   pin:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
+  share:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>`,
   open:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M10 14 21 3M21 14v7H3V3h7"/></svg>`,
   print:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>`,
   down:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg>`,
@@ -1733,7 +1842,8 @@ function openViewer(id){
   const fileBtns = hasFile ? `
       <button class="btn-vprint web-only" data-act="print-file" ${isImg(d)?"":"disabled"}>${ICO.print} Imprimir</button>
       <button class="btn-vprint web-only" data-act="download">${ICO.down} Descargar</button>
-      <button class="btn-vprint native-only" data-act="open-out">${ICO.open} Abrir fuera</button>`
+      <button class="btn-vprint native-only" data-act="open-out">${ICO.open} Abrir fuera</button>
+      <button class="btn-vprint" data-act="share" style="color:var(--frio);border-color:var(--frio)">${ICO.share} ${d.cat === "libros" && !isImg(d) ? "Compartir páginas" : "Compartir"}</button>`
     : d.link ? `<a class="btn-vprint" href="${escapeHtml(d.link)}" target="_blank" rel="noopener">${ICO.open} Abrir en Drive</a>` : "";
   const meta = (extra) => `<div class="viewer-meta">
       <div class="left"><button class="btn-del" data-act="del">Eliminar</button><button class="btn-vprint" data-act="edit">${ICO.edit} Editar</button></div>
@@ -1771,6 +1881,7 @@ function openViewer(id){
             <button class="btn-vprint web-only" data-act="print-file">${ICO.print} Imprimir archivo</button>
             <button class="btn-vprint web-only" data-act="download">${ICO.down} Descargar</button>
             <button class="btn-vprint native-only" data-act="open-out">${ICO.open} Abrir fuera</button>
+            <button class="btn-vprint" data-act="share" style="color:var(--frio);border-color:var(--frio)">${ICO.share} Compartir</button>
           </span></div></div>`;
   }else if(d.receta){
     content.innerHTML = recetaHtml(d) + media +
@@ -1798,6 +1909,7 @@ function openViewer(id){
   on("print-file", () => printFile());
   on("download", () => descargar());
   on("open-out", () => abrirFuera());
+  on("share", () => compartir());
   if(d.receta) activarReceta(d, content);
   if(d.cat === "proveedores") activarProveedor(d, content);
   show("viewOverlay");
@@ -3626,7 +3738,7 @@ function closeOverlay(id){
   if(id==="impOverlay"){ IMP.editId = null; }
   if(id==="cpOverlay" && CP && !$("cpLogin").classList.contains("hidden")) CP.after = null;
 }
-function closeAllOverlays(){ ["cpOverlay","cpProvOverlay","pedOverlay","histOverlay","ftOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
+function closeAllOverlays(){ ["cpOverlay","cpProvOverlay","pedOverlay","histOverlay","ftOverlay","shareOverlay","addOverlay","viewOverlay","impOverlay"].forEach(closeOverlay); }
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", e=>closeOverlay(e.target.closest(".overlay").id)));
 // Cerrar pinchando fuera solo si el clic EMPIEZA y TERMINA fuera del recuadro
 // (al seleccionar texto y soltar el ratón fuera no se cierra). Los formularios no se cierran pinchando fuera.
@@ -3682,6 +3794,8 @@ $("cpAllBtn").addEventListener("click", cpActualizarTodos);
 $("cpProvBtn").addEventListener("click", cpImportarProveedores);
 $("histBtn").addEventListener("click", () => abrirHistorial());
 $("ftBtn").addEventListener("click", abrirFotoTabla);
+$("shareGo").addEventListener("click", compartirPaginas);
+$("sharePags").addEventListener("keydown", e => { if(e.key === "Enter") compartirPaginas(); });
 $("ftFile").addEventListener("change", ftElegirFoto);
 $("ftLeer").addEventListener("click", ftLeer);
 $("ftOtra").addEventListener("click", abrirFotoTabla);
