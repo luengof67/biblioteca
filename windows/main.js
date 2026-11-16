@@ -107,6 +107,21 @@ ipcMain.handle("imprimir-pdf", async (ev) => {
   return true;
 });
 
+// Compartir: Windows no tiene una hoja de compartir para apps de escritorio como esta, así que
+// el archivo se guarda en Descargas\Biblioteca y se abre el Explorador con él marcado,
+// listo para arrastrarlo a WhatsApp, Telegram o al correo.
+ipcMain.handle("guardar-compartir", async (ev, nombre, datos) => {
+  const carpeta = path.join(app.getPath("downloads"), "Biblioteca");
+  fs.mkdirSync(carpeta, { recursive: true });
+  const limpio = String(nombre || "documento").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").replace(/\s+\./g, ".").trim().slice(0, 150) || "documento";
+  const ext = path.extname(limpio), base = limpio.slice(0, limpio.length - ext.length);
+  let archivo = path.join(carpeta, limpio);
+  for (let i = 2; fs.existsSync(archivo); i++) archivo = path.join(carpeta, `${base} (${i})${ext}`);
+  fs.writeFileSync(archivo, Buffer.from(datos));
+  shell.showItemInFolder(archivo);
+  return archivo;
+});
+
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   crearVentana();

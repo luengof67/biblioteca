@@ -1516,7 +1516,7 @@ async function blobActual(){
 }
 const blobBase64 = blob => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(blob); });
 async function compartirArchivo(blob, nombre, titulo){
-  nombre = nombre.replace(/[\\/:*?"<>|]+/g, " ").trim() || "documento";
+  nombre = nombre.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").replace(/\s+\./g, ".").trim() || "documento";
   if(IS_NATIVE){
     const P = window.Capacitor.Plugins || {};
     if(!P.Share || !P.Filesystem) throw new AvisoUsuario("Para compartir hace falta la última versión de la app. Instala el APK nuevo.");
@@ -1526,8 +1526,16 @@ async function compartirArchivo(blob, nombre, titulo){
     catch(e){ if(!/cancel/i.test(String(e && e.message))) throw e; }
     return;
   }
+  // App de Windows (.exe): se guarda en Descargas\Biblioteca y se abre la carpeta con el archivo marcado.
+  if(window.escritorio && window.escritorio.guardarCompartir){
+    await window.escritorio.guardarCompartir(nombre, new Uint8Array(await blob.arrayBuffer()));
+    toast("Guardado en Descargas › Biblioteca. Arrástralo a WhatsApp o al correo.");
+    return;
+  }
+  // En el .exe antiguo y en navegadores de PC no hay hoja de compartir fiable: se descarga.
+  const escritorio = /Electron|Windows NT|Macintosh|X11/.test(navigator.userAgent) && !/Android|iPhone|iPad/.test(navigator.userAgent);
   const file = new File([blob], nombre, { type: blob.type || "application/octet-stream" });
-  if(navigator.canShare && navigator.canShare({ files:[file] })){
+  if(!escritorio && navigator.canShare && navigator.canShare({ files:[file] })){
     try{ await navigator.share({ files:[file], title:titulo }); return; }
     catch(e){ if(e.name === "AbortError") return; /* si el navegador no deja, se descarga */ }
   }
