@@ -88,23 +88,40 @@ function crearVentana() {
   win.webContents.session.clearCache().finally(() => win.loadURL(APP_URL, { extraHeaders: "pragma: no-cache\n" }));
 }
 
-// Imprimir: Windows no enseña vista previa en apps de escritorio, así que se genera un PDF
-// de lo que se va a imprimir y se abre en una ventana; desde ahí se ve, se imprime o se guarda.
-ipcMain.handle("imprimir-pdf", async (ev) => {
-  const pdf = await ev.sender.printToPDF({ printBackground: false, pageSize: "A4", preferCSSPageSize: true });
+// Imprimir: se genera un PDF y se abre con el programa de PDF de Windows (Acrobat, Edge…).
+// Así el cuadro de imprimir enseña la vista previa y todas las opciones de la impresora.
+// Si no hay ningún programa para PDF, se enseña en una ventana de la propia app.
+function archivoTemporal(nombre) {
   const carpeta = path.join(app.getPath("temp"), "biblioteca-impresion");
   fs.mkdirSync(carpeta, { recursive: true });
-  // Borrar PDFs de impresiones anteriores
+  // Borrar PDFs de impresiones anteriores (los que sigan abiertos en otro programa se quedan)
   for (const f of fs.readdirSync(carpeta)) { try { fs.unlinkSync(path.join(carpeta, f)); } catch {} }
-  const archivo = path.join(carpeta, `impresion-${Date.now()}.pdf`);
-  fs.writeFileSync(archivo, pdf);
+  const limpio = String(nombre || "impresion").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) || "impresion";
+  return path.join(carpeta, `${limpio.replace(/\.pdf$/i, "")} ${Date.now()}.pdf`);
+}
+async function abrirPdf(archivo) {
+  const error = await shell.openPath(archivo);   // "" si se abrió bien
+  if (!error) return "programa";
   const vista = new BrowserWindow({
     width: 900, height: 1000, parent: win, title: "Vista previa · Biblioteca",
     icon: path.join(__dirname, "icon.ico"), autoHideMenuBar: true, backgroundColor: "#525659",
     webPreferences: { plugins: true, contextIsolation: true, nodeIntegration: false },
   });
   vista.loadURL(pathToFileURL(archivo).href);
-  return true;
+  return "ventana";
+}
+// Lo que se ve para imprimir (listados, fichas, pedidos…), pasado a PDF
+ipcMain.handle("imprimir-pdf", async (ev) => {
+  const pdf = await ev.sender.printToPDF({ printBackground: false, pageSize: "A4", preferCSSPageSize: true });
+  const archivo = archivoTemporal("Biblioteca impresion");
+  fs.writeFileSync(archivo, pdf);
+  return abrirPdf(archivo);
+});
+// Un PDF guardado (menú, catálogo…): se abre tal cual, sin convertirlo
+ipcMain.handle("abrir-pdf", async (ev, nombre, datos) => {
+  const archivo = archivoTemporal(nombre);
+  fs.writeFileSync(archivo, Buffer.from(datos));
+  return abrirPdf(archivo);
 });
 
 // Compartir: Windows no tiene una hoja de compartir para apps de escritorio como esta, así que

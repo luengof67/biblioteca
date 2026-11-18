@@ -1677,6 +1677,15 @@ async function printFile(){
     imprimir(); return;
   }
   if(!my.pdf){ toast("Espera a que termine de cargar el documento"); return; }
+  // App de Windows: el PDF original se abre en el programa de PDF (más nítido y con vista previa).
+  if(window.escritorio && window.escritorio.abrirPdf && VS.url){
+    try{
+      const datos = new Uint8Array(await (await fetch(VS.url)).arrayBuffer());
+      await window.escritorio.abrirPdf(d.fileName || d.title || "documento", datos);
+      toast("Abierto en tu programa de PDF: imprime desde ahí");
+      return;
+    }catch(e){ /* si falla, se imprime como siempre */ }
+  }
   const n = my.pdf.numPages;
   if(n > 60 && !confirm(`El documento tiene ${n} páginas. ¿Imprimirlo entero?`)) return;
   const btn = document.querySelector('[data-act="print-file"]');
