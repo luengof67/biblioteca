@@ -9,6 +9,10 @@
 //   POST /tabla    { imagen, tipo }        → { documento:{ titulo, tablas:[{ titulo, columnas, rellenar, filas }] } }
 //                                            Lee las tablas de una foto (lista de productos, tarifa, hoja de
 //                                            pedido…) para montar un documento con casillas de precio (solo con IA)
+//   POST /menu     { ruta, tipo }          → { titulo, platos:[{ nombre, apartado }] }
+//                                            Lee los platos del menú de un evento guardado en la Biblioteca
+//                                            (PDF o foto de Storage, ruta "archivos/…"), tal cual (solo con IA).
+//                                            Lo usa Planificario para importar eventos.
 //
 // Solo atiende a cuentas de la lista "permitidos" de Firestore: la app manda el token de la sesión
 // y aquí se comprueba preguntando a Firestore con ese mismo token.
@@ -24,7 +28,10 @@ const ORIGENES = [
   "https://biblioteca-cocina.firebaseapp.com",
   "https://localhost",            // app Android (Capacitor)
   "capacitor://localhost",
+  "http://tauri.localhost",       // Planificario en Windows (Tauri 2)
+  "https://tauri.localhost",
 ];
+const BUCKET = "biblioteca-cocina.firebasestorage.app";
 const CATEGORIAS = ["entrantes","ensaladas","sopas","arroces","pasta","legumbres","verduras","huevos",
                     "pescados","carnes","aves","salsas","guarniciones","masas","postres","otros"];
 const ALERGENOS = ["gluten","crustaceos","huevos","pescado","cacahuetes","soja","lacteos","cascara",
@@ -52,6 +59,7 @@ export default {
       if (ruta === "/extraer") return json(await extraer(body, env));
       if (ruta === "/texto") return json(await desdeTexto(body, env));
       if (ruta === "/tabla") return json(await tablaDesdeFoto(body, env));
+      if (ruta === "/menu") return json(await menuDesdeArchivo(body, env, testigoDe(req)));
       return json({ error: "No encontrado" }, 404);
     } catch (e) {
       const status = e instanceof Aviso ? e.status : 500;
@@ -74,8 +82,9 @@ function cabecerasCors(origin) {
 
 /* ==================== ACCESO ==================== */
 const CACHE_ACCESO = new Map();   // token → caduca (ms)
+const testigoDe = req => (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
 async function comprobarUsuario(req) {
-  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  const token = testigoDe(req);
   if (!token) throw new Aviso("Falta la sesión. Vuelve a entrar en la Biblioteca.", 401);
   const hit = CACHE_ACCESO.get(token);
   if (hit && hit > Date.now()) return;
@@ -582,4 +591,83 @@ function normalizarDocumento(o) {
   }).filter(t => t.filas.length);
   if (!tablas.length) throw new Aviso("En la foto no se ha encontrado ninguna tabla ni lista.");
   return { titulo: celda(o.titulo) || "Documento", tablas };
+}
+
+
+/* ==================== MENÚ DE UN EVENTO (PDF o foto de la Biblioteca) ==================== */
+const MAX_ARCHIVO_MENU = 20 * 1024 * 1024;
+
+async function menuDesdeArchivo({ ruta, tipo } = {}, env, token) {
+  if (!env.ANTHROPIC_API_KEY) throw new Aviso("Para leer menús hace falta activar la IA del lector (secreto ANTHROPIC_API_KEY en Cloudflare).");
+  ruta = String(ruta || "");
+  if (!/^archivos\/[^/]+$/.test(ruta)) throw new Aviso("Esa ficha no tiene un archivo que se pueda leer.");
+  // Se descarga aquí, con la misma sesión: las reglas de Storage deciden si se puede.
+  let r;
+  try {
+    r = await fetch(`https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(ruta)}?alt=media`,
+      { headers: { Authorization: `Firebase ${token}` }, signal: AbortSignal.timeout(30000) });
+  } catch { throw new Aviso("No se pudo descargar el archivo de la Biblioteca.", 502); }
+  if (r.status === 401 || r.status === 403) throw new Aviso("Esta cuenta no puede abrir ese archivo.", 403);
+  if (r.status === 404) throw new Aviso("El archivo ya no está en la Biblioteca.", 404);
+  if (!r.ok) throw new Aviso(`No se pudo descargar el archivo (${r.status}).`, 502);
+  const largo = Number(r.headers.get("Content-Length") || 0);
+  if (largo > MAX_ARCHIVO_MENU) throw new Aviso("El archivo pesa demasiado para leerlo (máximo 20 MB).");
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  if (bytes.length > MAX_ARCHIVO_MENU) throw new Aviso("El archivo pesa demasiado para leerlo (máximo 20 MB).");
+  const media = String(tipo || r.headers.get("Content-Type") || "").split(";")[0].trim();
+  const datos = base64(bytes);
+  let pieza;
+  if (media === "application/pdf" || /\.pdf$/i.test(ruta)) pieza = { type: "document", source: { type: "base64", media_type: "application/pdf", data: datos } };
+  else if (TIPOS_IMAGEN.includes(media)) pieza = { type: "image", source: { type: "base64", media_type: media, data: datos } };
+  else throw new Aviso("Solo se pueden leer PDF y fotos (JPG, PNG, WEBP).");
+
+  const instr = `Esto es el menú de un evento de un hotel (boda, comunión, comida de empresa, cóctel…).
+Copia los platos TAL CUAL están escritos, en el mismo orden, con el apartado bajo el que aparecen.
+Devuelve SOLO este JSON:
+{
+  "titulo": "nombre del evento o del menú si se lee (por ejemplo \"Boda Martínez\" o \"Menú de Navidad\"), o \"\"",
+  "platos": [ { "nombre": "Crema de calabaza con jengibre", "apartado": "Primeros" } ]
+}
+Normas:
+- Un plato por elemento. No inventes platos, no los resumas ni los cambies, no añadas guarniciones que no estén escritas.
+- "apartado" es el epígrafe del menú (Aperitivos, Entrantes, Primer plato, Segundo plato, Postre, Cóctel…); si no hay epígrafes, "".
+- No incluyas precios, bebidas de bodega, fechas, horarios, número de comensales, alérgenos ni textos de cortesía.
+- Escribe en formato normal: mayúscula solo al principio y en nombres propios, aunque el menú esté en mayúsculas.
+- Si en el archivo no hay ningún menú, responde {"error":"sin menu"}.`;
+
+  let res;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: env.MODELO_VISION || env.MODELO || "claude-haiku-5-5",
+        max_tokens: 4000,
+        system: "Transcribes menús de eventos para la cocina de un hotel. Respondes SOLO con un objeto JSON válido, sin texto antes ni después.",
+        messages: [{ role: "user", content: [pieza, { type: "text", text: instr }] }],
+      }),
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch { throw new Aviso("La IA no ha respondido a tiempo. Prueba otra vez.", 504); }
+  if (res.status === 401) throw new Aviso("La clave de la IA no es válida. Revísala en Cloudflare.", 502);
+  if (res.status === 429 || res.status === 529) throw new Aviso("La IA está saturada. Prueba en un minuto.", 503);
+  if (!res.ok) throw new Aviso(`La IA ha devuelto un error (${res.status}).`, 502);
+  const data = await res.json();
+  const txt = (data.content || []).map(c => c.text || "").join("");
+  let o;
+  try { o = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1)); }
+  catch { throw new Aviso("No se ha podido leer el menú. Prueba con un PDF o una foto más nítida.", 502); }
+  if (o.error) throw new Aviso("En ese archivo no se ha encontrado ningún menú.");
+  const t = v => recortar(limpiar(String(v ?? "")), 160);
+  const platos = (Array.isArray(o.platos) ? o.platos : []).slice(0, 120)
+    .map(p => ({ nombre: t(p && p.nombre), apartado: recortar(t(p && p.apartado), 60) }))
+    .filter(p => p.nombre);
+  if (!platos.length) throw new Aviso("En ese archivo no se ha encontrado ningún menú.");
+  return { titulo: recortar(t(o.titulo), 120), platos };
+}
+
+function base64(bytes) {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
 }
